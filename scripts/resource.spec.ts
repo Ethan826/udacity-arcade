@@ -3,37 +3,43 @@
 
 import {ResourceCache} from "./resource";
 
-let URL1 = "../images/char-boy.png";
-let URL2 = "../images/char-cat-girl.png";
+let URL1 = "images/char-boy.png";
+let URL2 = "images/char-cat-girl.png";
 
+/**
+* In order to centralize testing into a single test.ts / test.js file, all tests
+* are declared as private class methods, each of which wraps a Jasmine
+* function. The class then exposes a single run() method, which calls all of
+* the unexecuted test functions.
+*/
 export class Tests {
-  private rc = new ResourceCache();
 
-  private testsForLoad = () => {
-    return describe("Tests for load()", () => {
-      it("accepts a string", () => {
-        expect(() => { this.rc.load("Foo") }).not.toThrow();
+  private tests = () => {
+    return describe("Tests for ResourceCache", () => {
+      it("allows creation of an instance of ResourceCache", () => {
+          expect(() => {
+              new ResourceCache([URL1], () => {});
+          })
+          .not.toThrow();
+          expect(() => {
+              new ResourceCache([URL1, URL2], () => {});
+          })
+          .not.toThrow();
       });
-      it("accepts an array of strings", () => {
-        expect(() => { this.rc.load(["Foo", "Bar"]) }).not.toThrow();
-      });
-      it("errors with a number", () => {
-        expect(() => { this.rc.load(3) }).toThrow();
-      });
-      it("errors with an array of numbers", () => {
-        expect(() => { this.rc.load([3, 4, 5]) }).toThrow();
-      });
-      it("loads a single image fresh", () => {
-        let localRC = new ResourceCache();
-        localRC.load(URL1);
-        let img = localRC.getResourceCache()[URL1];
-        expect(img).toEqual(new Image()); // This isn't correctly implemented yet.
+
+      // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      it("calls the callback method", () => {
+          let spy = jasmine.createSpy("spy");
+          beforeEach((spy) => {
+              new ResourceCache([URL1], spy);
+          });
+          expect(spy).toHaveBeenCalled();
       });
       //it("", () => {});
     });
   }
 
   run = () => {
-    this.testsForLoad();
+    this.tests();
   }
 }

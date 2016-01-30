@@ -1,3 +1,35 @@
+class GameImage {
+  url: string;
+  image: HTMLImageElement;
+  ready: boolean;
+  // Something for the callback?
+}
+
+class ImageSupervisor {
+  private images: GameImage[] = [];
+  private allReady = false;
+
+  private checker() {
+    
+  }
+
+  addImage(url: string) {
+    let newImage = new GameImage;
+    newImage.url = url;
+    newImage.ready = false;
+    let img = new Image();
+    img.src = url;
+    img.onload = () => {
+      newImage.ready = true;
+      this.checker();
+    };
+    this.images.push(newImage);
+  }
+
+  getImage() {
+  }
+}
+
 export class ResourceCache {
   private resourceCache: { [url: string]: HTMLImageElement } = {};
 

@@ -7,6 +7,35 @@
     }
 })(function (require, exports) {
     "use strict";
+    var GameImage = (function () {
+        function GameImage() {
+        }
+        return GameImage;
+    }());
+    var ImageSupervisor = (function () {
+        function ImageSupervisor() {
+            this.images = [];
+            this.allReady = false;
+        }
+        ImageSupervisor.prototype.checker = function () {
+        };
+        ImageSupervisor.prototype.addImage = function (url) {
+            var _this = this;
+            var newImage = new GameImage;
+            newImage.url = url;
+            newImage.ready = false;
+            var img = new Image();
+            img.src = url;
+            img.onload = function () {
+                newImage.ready = true;
+                _this.checker();
+            };
+            this.images.push(newImage);
+        };
+        ImageSupervisor.prototype.getImage = function () {
+        };
+        return ImageSupervisor;
+    }());
     var ResourceCache = (function () {
         function ResourceCache() {
             var _this = this;

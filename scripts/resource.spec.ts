@@ -16,6 +16,13 @@ export class Tests {
 
   private tests = () => {
     return describe("Tests for ResourceCache", () => {
+      let i = new Image();
+
+      beforeEach((done) => {
+        i.src = URL1;
+        i.onload = () => { done(); }
+      });
+
       it("allows creation of an instance of ResourceCache", () => {
         expect(() => {
           new ResourceCache([URL1], () => { });
@@ -31,17 +38,10 @@ export class Tests {
           .toThrow();
       });
 
-      it("calls the callback method", () => {
-        let image = new Image();
-        image.src = URL1;
-        image.onload = () => {
-          console.log(image);
-        };
-        let rc = new ResourceCache([URL1], () => {
-          rc.getImage(URL1);
-        });
+      it("can retrieve images", () => {
+        let rc = new ResourceCache([URL1], () => {});
+        expect(i).toEqual(rc.getImage(URL1));
       });
-      //it("", () => {});
     });
   }
 

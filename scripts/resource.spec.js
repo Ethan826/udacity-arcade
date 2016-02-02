@@ -15,6 +15,11 @@ define(["require", "exports", "./resource"], function (require, exports, resourc
             var _this = this;
             this.tests = function () {
                 return describe("Tests for ResourceCache", function () {
+                    var i = new Image();
+                    beforeEach(function (done) {
+                        i.src = URL1;
+                        i.onload = function () { done(); };
+                    });
                     it("allows creation of an instance of ResourceCache", function () {
                         expect(function () {
                             new resource_1.ResourceCache([URL1], function () { });
@@ -29,17 +34,10 @@ define(["require", "exports", "./resource"], function (require, exports, resourc
                         })
                             .toThrow();
                     });
-                    it("calls the callback method", function () {
-                        var image = new Image();
-                        image.src = URL1;
-                        image.onload = function () {
-                            console.log(image);
-                        };
-                        var rc = new resource_1.ResourceCache([URL1], function () {
-                            rc.getImage(URL1);
-                        });
+                    it("can retrieve images", function () {
+                        var rc = new resource_1.ResourceCache([URL1], function () { });
+                        expect(i).toEqual(rc.getImage(URL1));
                     });
-                    //it("", () => {});
                 });
             };
             this.run = function () {

@@ -24,30 +24,28 @@ class ImageSupervisor {
   constructor(private callback: Function) { }
 
   addImage(url: string) {
-    let img = new Image();
-    img.src = url;
-    let tempImage: GameImage = { url: url, ready: false, img: img };
-    tempImage.img.onload = () => {
-      tempImage.ready = true;
-      if(this.checkAllLoaded()) {
-        this.callback();
-      }
-    };
-    this.images.push(tempImage);
+    if (!this.getImage(url)) {
+      let img = new Image();
+      img.src = url;
+      let tempImage: GameImage = { url: url, ready: false, img: img };
+      tempImage.img.onload = () => {
+        tempImage.ready = true;
+        if (this.checkAllLoaded()) {
+          this.callback();
+        }
+      };
+      this.images.push(tempImage);
+    }
   }
 
   getImage(url: string) {
     let result: HTMLImageElement = null;
     this.images.forEach((image) => {
-      if(image.url === url) {
+      if (image.url === url) {
         result = image.img;
       }
     });
-    if(result) {
-      return result;
-    } else {
-      throw `${url} not found.`;
-    }
+    return result;
   }
 
   markRequestsComplete() {
@@ -56,11 +54,11 @@ class ImageSupervisor {
 
   private checkAllLoaded() {
     let result = true;
-    if(!this.requestsComplete) {
+    if (!this.requestsComplete) {
       result = false;
     } else {
       this.images.forEach((image) => {
-        if(!image.ready) {
+        if (!image.ready) {
           result = false;
         }
       });

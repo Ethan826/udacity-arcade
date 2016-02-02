@@ -15,16 +15,18 @@ define(["require", "exports"], function (require, exports) {
         }
         ImageSupervisor.prototype.addImage = function (url) {
             var _this = this;
-            var img = new Image();
-            img.src = url;
-            var tempImage = { url: url, ready: false, img: img };
-            tempImage.img.onload = function () {
-                tempImage.ready = true;
-                if (_this.checkAllLoaded()) {
-                    _this.callback();
-                }
-            };
-            this.images.push(tempImage);
+            if (!this.getImage(url)) {
+                var img = new Image();
+                img.src = url;
+                var tempImage = { url: url, ready: false, img: img };
+                tempImage.img.onload = function () {
+                    tempImage.ready = true;
+                    if (_this.checkAllLoaded()) {
+                        _this.callback();
+                    }
+                };
+                this.images.push(tempImage);
+            }
         };
         ImageSupervisor.prototype.getImage = function (url) {
             var result = null;
@@ -33,12 +35,7 @@ define(["require", "exports"], function (require, exports) {
                     result = image.img;
                 }
             });
-            if (result) {
-                return result;
-            }
-            else {
-                throw url + " not found.";
-            }
+            return result;
         };
         ImageSupervisor.prototype.markRequestsComplete = function () {
             this.requestsComplete = true;

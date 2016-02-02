@@ -17,23 +17,29 @@ export class Tests {
   private tests = () => {
     return describe("Tests for ResourceCache", () => {
       it("allows creation of an instance of ResourceCache", () => {
-          expect(() => {
-              new ResourceCache([URL1], () => {});
-          })
+        expect(() => {
+          new ResourceCache([URL1], () => { });
+        })
           .not.toThrow();
-          expect(() => {
-              new ResourceCache([URL1, URL2], () => {});
-          })
+        expect(() => {
+          new ResourceCache([URL1, URL2], () => { });
+        })
           .not.toThrow();
+        expect(() => {
+          new ResourceCache("foo", () => { });
+        })
+          .toThrow();
       });
 
-      // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       it("calls the callback method", () => {
-          let spy = jasmine.createSpy("spy");
-          beforeEach((spy) => {
-              new ResourceCache([URL1], spy);
-          });
-          expect(spy).toHaveBeenCalled();
+        let image = new Image();
+        image.src = URL1;
+        image.onload = () => {
+          console.log(image);
+        };
+        let rc = new ResourceCache([URL1], () => {
+          rc.getImage(URL1);
+        });
       });
       //it("", () => {});
     });

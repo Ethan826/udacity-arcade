@@ -1,13 +1,13 @@
 /**
-* The GameImage class maintains its own state over whether it is ready in a
+* The GameImage object maintains its own state over whether it is ready in a
 * dedicated boolean variable, rather than the kludge of changing types from
 * boolean to HTMLImageElement. This class is not exported, but its instances
 * are closed over by the ResourceCache class.
 */
-class GameImage {
-    url: string;
-    image: HTMLImageElement;
-    ready: boolean;
+interface GameImage {
+  url: string;
+  ready: boolean;
+  img: HTMLImageElement;
 }
 
 /**
@@ -18,79 +18,79 @@ class GameImage {
 * instance is not exported, but is closed over by the ResourceCache class.
 */
 class ImageSupervisor {
-    private images: GameImage[] = [];
-    private allReady = false;
-    private requestsDone = false;
+  private images: GameImage[] = [];
+  private requestsComplete = false;
 
-    constructor(private callback: Function) { }
+  constructor(private callback: Function) { }
 
-    private checker(): boolean {
-        let result = true;
-        this.images.forEach((i) => {
-            if (i.ready === false) {
-                result = false;
-            }
-        });
-        return result;
+  addImage(url: string) {
+    let img = new Image();
+    img.src = url;
+    let tempImage: GameImage = { url: url, ready: false, img: img };
+    tempImage.img.onload = () => {
+      tempImage.ready = true;
+      if(this.checkAllLoaded()) {
+        this.callback();
+      }
+    };
+    this.images.push(tempImage);
+  }
+
+  getImage(url: string) {
+    let result: HTMLImageElement = null;
+    this.images.forEach((image) => {
+      if(image.url === url) {
+        result = image.img;
+      }
+    });
+    if(result) {
+      return result;
+    } else {
+      throw `${url} not found.`;
     }
+  }
 
-    requestsAreDone() {
-        this.requestsDone = true;
-    }
+  markRequestsComplete() {
+    this.requestsComplete = true;
+  }
 
-    addImage(url: string) {
-        let newImage = new GameImage;
-        newImage.url = url;
-        newImage.ready = false;
-        let img = new Image();
-        img.src = url;
-        img.onload = () => {
-            newImage.ready = true;
-            this.allReady = this.checker() && this.requestsDone;
-            if(this.allReady) {
-                this.callback();
-            }
-        };
-        this.images.push(newImage);
-    }
-
-    getImage(url: string): HTMLImageElement {
-        let result = this.images.filter((i) => {
-            return i.url === url;
-        })[0]["image"];
-        if(result) {
-            return result;
-        } else {
-            throw "Requested image url not found.";
+  private checkAllLoaded() {
+    let result = true;
+    if(!this.requestsComplete) {
+      result = false;
+    } else {
+      this.images.forEach((image) => {
+        if(!image.ready) {
+          result = false;
         }
+      });
     }
+    return result;
+  }
 }
 
 /**
-* Replace the load() method with the class constructor, which must be called
-* with an array of strings representing the URLs of the images for loading.
-* The constructor handles repeatedly calling its helper method rather than the
-* load() method calling a helper method (load() was only being called once).
-* The class exposes only its constructor and its getImage() method, as well as
-* registering the resourceCache.callback() method for when all images are
-* loaded.
+* The ImageSupervisor class is the imtermediary to the GameImage instances. It
+* handles initiating each object and tracking when all are ready by registering
+* callbacks with each instance. When all callbacks are called, the class calls
+* its own callback function, which permits the program to continue. This class's
+* instance is not exported, but is closed over by the ResourceCache class.
 */
 export class ResourceCache {
-    private imageSupervisor: ImageSupervisor;
-    private callback: Function;
+  private allLoaded = false;
+  private imageSupervisor = new ImageSupervisor(() => {
+    this.allLoaded = true;
+    this.callback();
+  });
 
-    constructor(urls: string[], callback: Function) {
-        this.callback = callback;
-        this.imageSupervisor = new ImageSupervisor(() => {
-            this.callback();
-        });
-        urls.forEach((url) => {
-            this.imageSupervisor.addImage(url);
-        });
-        this.imageSupervisor.requestsAreDone();
-    }
+  constructor(urls: string[], private callback: Function) {
+    urls.forEach((url) => {
+      this.imageSupervisor.addImage(url);
+    });
+    this.imageSupervisor.markRequestsComplete();
+  }
 
-    getImage(url: string) {
-        this.imageSupervisor.getImage(url);
-    }
+  getImage(url: string): HTMLImageElement {
+    return this.imageSupervisor.getImage(url);
+  }
 }

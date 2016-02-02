@@ -24,14 +24,20 @@ define(["require", "exports", "./resource"], function (require, exports, resourc
                             new resource_1.ResourceCache([URL1, URL2], function () { });
                         })
                             .not.toThrow();
+                        expect(function () {
+                            new resource_1.ResourceCache("foo", function () { });
+                        })
+                            .toThrow();
                     });
-                    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                     it("calls the callback method", function () {
-                        var spy = jasmine.createSpy("spy");
-                        beforeEach(function (spy) {
-                            new resource_1.ResourceCache([URL1], spy);
+                        var image = new Image();
+                        image.src = URL1;
+                        image.onload = function () {
+                            console.log(image);
+                        };
+                        var rc = new resource_1.ResourceCache([URL1], function () {
+                            rc.getImage(URL1);
                         });
-                        expect(spy).toHaveBeenCalled();
                     });
                     //it("", () => {});
                 });

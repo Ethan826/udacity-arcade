@@ -12,7 +12,7 @@
         "removeComments": false,
         "noLib": false,
         "preserveConstEnums": true,
-        "suppressImplicitAnyIndexErrors": false
+        "suppressImplicitAnyIndexErrors": true
     },
     "filesGlob": [
         "**/*.ts",
@@ -22,6 +22,9 @@
     "compileOnSave": true,
     "buildOnSave": false,
     "files": [
+        "app.ts",
+        "engine.spec.ts",
+        "engine.ts",
         "resource.spec.ts",
         "resource.ts",
         "tests.ts"

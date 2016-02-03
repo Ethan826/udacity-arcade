@@ -1,4 +1,3 @@
-/// <reference path="../typings/requirejs/require.d.ts"/>
 /// <reference path="../typings/jasmine/jasmine.d.ts"/>
 define(["require", "exports", "./resource"], function (require, exports, resource_1) {
     "use strict";

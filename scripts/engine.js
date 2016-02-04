@@ -46,7 +46,7 @@ define(["require", "exports", "./resource"], function (require, exports, resourc
                 }
             }
             /* Create an instance of ResourceCache and set the the callback (this
-             * replaces the init() method in the original
+             * replaces the init() method in the original.
              */
             this.rc = new resource_1.ResourceCache(images, function () {
                 _this.lastTime = Date.now();
@@ -54,7 +54,20 @@ define(["require", "exports", "./resource"], function (require, exports, resourc
             });
         }
         Engine.prototype.main = function () {
+            this.now = Date.now();
+            var dt = (this.now - this.lastTime) / 1000.0;
+            /* I contemplated replacing this.LastTime two calls to Date.now()
+             * But using two variables is about ten times faster than calling
+             * Date.now() twice. https://jsfiddle.net/1643q9qv/1/
+             */
+            this.lastTime = this.now;
+            this.update(dt);
             this.render();
+            /* Is this recursive? Or is the
+             */
+            window.requestAnimationFrame(this.main);
+        };
+        Engine.prototype.update = function (dt) {
         };
         Engine.prototype.render = function () {
             var _this = this;

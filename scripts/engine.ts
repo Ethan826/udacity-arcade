@@ -29,7 +29,9 @@ export class Engine {
   private rc: ResourceCache;
   private canvas = document.createElement("canvas");
   private ctx = this.canvas.getContext("2d");
+  private now: number;
   private lastTime: number;
+  private dt: number;
 
   /* The class constructor handles the preloading of images and the work of the
    * init() function as it was previously implemented.
@@ -52,7 +54,7 @@ export class Engine {
     }
 
     /* Create an instance of ResourceCache and set the the callback (this
-     * replaces the init() method in the original
+     * replaces the init() method in the original.
      */
     this.rc = new ResourceCache(images, () => {
       this.lastTime = Date.now();
@@ -61,7 +63,23 @@ export class Engine {
   }
 
   private main() {
+    this.now = Date.now();
+    let dt = (this.now - this.lastTime) / 1000.0;
+
+    /* I contemplated replacing this.LastTime two calls to Date.now()
+     * But using two variables is about ten times faster than calling
+     * Date.now() twice. https://jsfiddle.net/1643q9qv/1/
+     */
+    this.lastTime = this.now;
+    this.update(dt);
     this.render();
+
+    /* Is this recursive? Or is the
+     */
+    window.requestAnimationFrame(this.main);
+  }
+
+  private update(dt: number) {
   }
 
   private render() {

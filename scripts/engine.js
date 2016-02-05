@@ -1,4 +1,4 @@
-define(["require", "exports", "./resource"], function (require, exports, resource_1) {
+define(["require", "exports", "./resource", "./app"], function (require, exports, resource_1, app_1) {
     "use strict";
     var Engine = (function () {
         /* The class constructor handles the preloading of images and the work of the
@@ -29,6 +29,7 @@ define(["require", "exports", "./resource"], function (require, exports, resourc
             this.ROW_HEIGHT = 83;
             this.CANVAS_WIDTH = 505;
             this.CANVAS_HEIGHT = 606;
+            this.app = new app_1.App();
             this.canvas = document.createElement("canvas");
             this.ctx = this.canvas.getContext("2d");
             /* Set up the canvas */
@@ -69,6 +70,9 @@ define(["require", "exports", "./resource"], function (require, exports, resourc
         };
         Engine.prototype.update = function (dt) {
         };
+        //   private updateEntites(dt: number) {
+        //       allEnemies.forEach(() => {});
+        //   }
         Engine.prototype.render = function () {
             var _this = this;
             /* By storing the map of what goes in each row in a constant, by pulling
@@ -85,4 +89,5 @@ define(["require", "exports", "./resource"], function (require, exports, resourc
         return Engine;
     }());
     exports.Engine = Engine;
+    var engine = new Engine();
 });

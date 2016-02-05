@@ -1,4 +1,5 @@
 import {ResourceCache} from "./resource";
+import {App} from "./app"
 
 export class Engine {
   /* The constants in the original were scattered throughout the file; here I
@@ -10,7 +11,7 @@ export class Engine {
     grass: "images/grass-block.png",
     enemy: "images/enemy-bug.png",
     char: "images/char-boy.png"
-  }
+  };
   private ROW_MAP = [
     this.IMAGE_LOCATIONS.water,
     this.IMAGE_LOCATIONS.stone,
@@ -18,7 +19,7 @@ export class Engine {
     this.IMAGE_LOCATIONS.stone,
     this.IMAGE_LOCATIONS.grass,
     this.IMAGE_LOCATIONS.grass
-  ]
+  ];
   private NUM_COLS = 5;
   private COL_WIDTH = 101;
   private ROW_HEIGHT = 83;
@@ -27,6 +28,7 @@ export class Engine {
 
   /* Variables */
   private rc: ResourceCache;
+  private app = new App();
   private canvas = document.createElement("canvas");
   private ctx = this.canvas.getContext("2d");
   private now: number;
@@ -82,6 +84,10 @@ export class Engine {
   private update(dt: number) {
   }
 
+//   private updateEntites(dt: number) {
+//       allEnemies.forEach(() => {});
+//   }
+
   private render() {
     /* By storing the map of what goes in each row in a constant, by pulling
      * the file locations from another constant, and by relying on constants to
@@ -99,3 +105,5 @@ export class Engine {
     });
   }
 }
+
+let engine = new Engine();

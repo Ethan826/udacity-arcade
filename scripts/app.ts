@@ -1,4 +1,6 @@
 /// <reference path="./engine.ts"/>
+import {CANVAS_CONSTANTS} from "./engine";
+import {ResourceCache} from "./resource";
 
 interface Location {
   x: number;
@@ -9,7 +11,18 @@ interface Location {
  * manage the Engine class in a single point of entry.
  */
 export class App {
-  constructor() { }
+  private ctx: CanvasRenderingContext2D;
+  private player: Player;
+
+
+  constructor(private rc: ResourceCache) {
+    /* Bad loose coupling here. Hmm. */
+    this.player = new Player(this.ctx, this.rc.getImage("images/char-boy.png"));
+  }
+
+  render() {
+    this.player.render();
+  }
 }
 
 interface Entity {
@@ -24,13 +37,28 @@ class Enemy implements Entity {
 
   update(dt: number) { }
 
-  render(ctx: CanvasRenderingContext2D) {
+  render() {
     this.ctx.drawImage(this.sprite, this.location.x, this.location.y);
   }
 }
 
 class Player implements Entity {
+  private location: Location;
+
+  constructor(private ctx: CanvasRenderingContext2D, private sprite: HTMLImageElement) {
+    /* The initial position is in the middle, halfway up the bottom row. */
+    this.location = {
+      x: CANVAS_CONSTANTS.canvasWidth / 2,
+      y: Math.floor(CANVAS_CONSTANTS.rowHeight * (CANVAS_CONSTANTS.numRows + 0.5))
+    };
+  }
+
   update(dt: number) { };
-  render() { };
+
+  render() {
+    this.ctx.drawImage(this.sprite, this.location.x, this.location.y);
+  };
+
   handleInput() { };
+
 }

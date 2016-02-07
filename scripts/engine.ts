@@ -1,6 +1,24 @@
 import {ResourceCache} from "./resource";
 import {App} from "./app"
 
+interface CanvasConstants {
+  numCols: number;
+  numRows: number;
+  colWidth: number;
+  rowHeight: number;
+  canvasWidth: number;
+  canvasHeight: number;
+}
+
+export let CANVAS_CONSTANTS: CanvasConstants = {
+  numCols: 5,
+  numRows: 6,
+  colWidth: 101,
+  rowHeight: 83,
+  canvasWidth: 505,
+  canvasHeight: 606
+}
+
 export class Engine {
   /* The constants in the original were scattered throughout the file; here I
    * have combined them for readability and to allow changes at a single point.
@@ -20,15 +38,11 @@ export class Engine {
     this.IMAGE_LOCATIONS.grass,
     this.IMAGE_LOCATIONS.grass
   ];
-  private NUM_COLS = 5;
-  private COL_WIDTH = 101;
-  private ROW_HEIGHT = 83;
-  private CANVAS_WIDTH = 505;
-  private CANVAS_HEIGHT = 606;
+  private CANVAS_CONSTANTS: CanvasConstants;
 
   /* Variables */
   private rc: ResourceCache;
-  private app = new App();
+  private app: App;
   private canvas = document.createElement("canvas");
   private ctx = this.canvas.getContext("2d");
   private now: number;
@@ -38,10 +52,14 @@ export class Engine {
   /* The class constructor handles the preloading of images and the work of the
    * init() function as it was previously implemented.
    */
-  constructor() {
+  constructor(canvasConstants: CanvasConstants) {
     /* Set up the canvas */
-    this.canvas.width = this.CANVAS_WIDTH;
-    this.canvas.height = this.CANVAS_HEIGHT;
+    this.CANVAS_CONSTANTS = canvasConstants;
+    if(this.CANVAS_CONSTANTS.numRows !== this.ROW_MAP.length) {
+      throw "Mismatch between numRows and rows in ROW_MAP";
+    }
+    this.canvas.width = canvasConstants.canvasWidth;
+    this.canvas.height = canvasConstants.canvasHeight;
     document.body.appendChild(this.canvas);
 
     /* Create the argument for the images passed into the ResourceCache
@@ -62,6 +80,7 @@ export class Engine {
       this.lastTime = Date.now();
       this.main();
     });
+    this.app = new App(this.rc);
   }
 
   private main() {
@@ -76,8 +95,6 @@ export class Engine {
     this.update(dt);
     this.render();
 
-    /* Is this recursive? Or is the
-     */
     window.requestAnimationFrame(this.main);
   }
 
@@ -95,15 +112,19 @@ export class Engine {
      * function's semantics are a lot clearer.
      */
     this.ROW_MAP.forEach((rowContents, rowIndex) => {
-      for (let colIndex = 0; colIndex < this.NUM_COLS; ++colIndex) {
+      for (let colIndex = 0; colIndex < this.CANVAS_CONSTANTS.numCols; ++colIndex) {
         this.ctx.drawImage(
           this.rc.getImage(rowContents),
-          colIndex * this.COL_WIDTH,
-          rowIndex * this.ROW_HEIGHT
+          colIndex * this.CANVAS_CONSTANTS.colWidth,
+          rowIndex * this.CANVAS_CONSTANTS.rowHeight
           );
       }
     });
   }
+
+  private renderEntities() {
+    this.app.render();
+  }
 }
 
-let engine = new Engine();
+let engine = new Engine(CANVAS_CONSTANTS);

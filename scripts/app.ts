@@ -51,8 +51,8 @@ abstract class Entity implements IEntity {
     protected dimensions: EntityDimensions;
 
     constructor(
-        private ctx: CanvasRenderingContext2D,
-        private sprite: HTMLImageElement) { }
+        protected ctx: CanvasRenderingContext2D,
+        protected sprite: HTMLImageElement) { }
 
     abstract update(dt: number): void;
 
@@ -74,7 +74,7 @@ abstract class Entity implements IEntity {
 }
 
 class EnemyBug extends Entity {
-    private speed = Math.random() * 300 + 100;
+    private speed = Math.random() * 400 + 100;
 
     constructor(ctx: CanvasRenderingContext2D, sprite: HTMLImageElement, private rowNum: number) {
         super(ctx, sprite);
@@ -94,7 +94,9 @@ class EnemyBug extends Entity {
 
     update(dt: number) {
         this.location.x += dt * this.speed;
-        this.location.x %= CANVAS_CONSTANTS.canvasWidth;
+        if(this.location.x - this.sprite.width > CANVAS_CONSTANTS.canvasWidth) {
+            this.location.x = this.location.x - Math.floor(1.1 * CANVAS_CONSTANTS.canvasWidth) - this.sprite.width;
+        }
     }
 }
 

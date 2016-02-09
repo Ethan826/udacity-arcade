@@ -57,7 +57,7 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
         function EnemyBug(ctx, sprite, rowNum) {
             _super.call(this, ctx, sprite);
             this.rowNum = rowNum;
-            this.speed = Math.random() * 300 + 100;
+            this.speed = Math.random() * 400 + 100;
             this.dimensions = {
                 startX: 1,
                 startY: 75,
@@ -71,7 +71,9 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
         }
         EnemyBug.prototype.update = function (dt) {
             this.location.x += dt * this.speed;
-            this.location.x %= engine_1.CANVAS_CONSTANTS.canvasWidth;
+            if (this.location.x - this.sprite.width > engine_1.CANVAS_CONSTANTS.canvasWidth) {
+                this.location.x = this.location.x - Math.floor(1.1 * engine_1.CANVAS_CONSTANTS.canvasWidth) - this.sprite.width;
+            }
         };
         return EnemyBug;
     }(Entity));

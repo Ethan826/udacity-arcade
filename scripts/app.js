@@ -12,16 +12,21 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
         function App(rc, ctx) {
             this.rc = rc;
             this.ctx = ctx;
-            this.player = new Player(this.ctx, this.rc.getImage("images/char-boy.png"));
-            this.topEnemy = new EnemyBug(this.ctx, this.rc.getImage("images/enemy-bug.png"), 2);
-            this.middleEnemy = new EnemyBug(this.ctx, this.rc.getImage("images/enemy-bug.png"), 3);
-            this.bottomEnemy = new EnemyBug(this.ctx, this.rc.getImage("images/enemy-bug.png"), 4);
+            var player = new Player(this.ctx, this.rc.getImage("images/char-boy.png"));
+            var topEnemy = new EnemyBug(this.ctx, this.rc.getImage("images/enemy-bug.png"), 2);
+            var middleEnemy = new EnemyBug(this.ctx, this.rc.getImage("images/enemy-bug.png"), 3);
+            var bottomEnemy = new EnemyBug(this.ctx, this.rc.getImage("images/enemy-bug.png"), 4);
+            this.entities = [player, topEnemy, middleEnemy, bottomEnemy];
         }
         App.prototype.render = function () {
-            this.player.render();
-            this.topEnemy.render();
-            this.middleEnemy.render();
-            this.bottomEnemy.render();
+            this.entities.forEach(function (entity) {
+                entity.render();
+            });
+        };
+        App.prototype.update = function (dt) {
+            this.entities.forEach(function (entity) {
+                entity.update(dt);
+            });
         };
         return App;
     }());
@@ -52,6 +57,7 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
         function EnemyBug(ctx, sprite, rowNum) {
             _super.call(this, ctx, sprite);
             this.rowNum = rowNum;
+            this.speed = Math.random() * 300 + 100;
             this.dimensions = {
                 startX: 1,
                 startY: 75,
@@ -60,16 +66,18 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
             };
             this.location = {
                 x: 0,
-                y: engine_1.CANVAS_CONSTANTS.rowHeight * rowNum // Why not centered?
+                y: engine_1.CANVAS_CONSTANTS.rowHeight * rowNum
             };
         }
-        EnemyBug.prototype.update = function (dt) { };
+        EnemyBug.prototype.update = function (dt) {
+            this.location.x += dt * this.speed;
+            this.location.x %= engine_1.CANVAS_CONSTANTS.canvasWidth;
+        };
         return EnemyBug;
     }(Entity));
     var Player = (function (_super) {
         __extends(Player, _super);
         function Player(ctx, sprite) {
-            /* The initial position is in the middle, halfway up the bottom row. */
             _super.call(this, ctx, sprite);
             this.dimensions = {
                 startX: 16,
@@ -77,15 +85,14 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
                 endX: 84,
                 endY: 140
             };
+            /* The initial position is in the middle, halfway up the bottom row. */
             this.location = {
                 x: engine_1.CANVAS_CONSTANTS.canvasWidth / 2,
                 y: Math.floor(engine_1.CANVAS_CONSTANTS.rowHeight * engine_1.CANVAS_CONSTANTS.numRows)
             };
         }
         Player.prototype.update = function (dt) { };
-        ;
         Player.prototype.handleInput = function () { };
-        ;
         return Player;
     }(Entity));
 });

@@ -32,6 +32,19 @@ define(["require", "exports", "./resource", "./app"], function (require, exports
                 this.IMAGE_LOCATIONS.grass,
                 this.IMAGE_LOCATIONS.grass
             ];
+            this.main = function () {
+                _this.now = Date.now(); // Why the fuck isn't this working???
+                var dt = (_this.now - _this.lastTime) / 1000.0;
+                /* I contemplated replacing this.LastTime two calls to Date.now()
+                 * But using two variables is about ten times faster than calling
+                 * Date.now() twice. https://jsfiddle.net/1643q9qv/1/
+                 */
+                _this.lastTime = _this.now;
+                _this.update(dt);
+                _this.render();
+                _this.app.render();
+                window.requestAnimationFrame(_this.main);
+            };
             /* Set up the canvas */
             this.CANVAS_CONSTANTS = canvasConstants;
             if (this.CANVAS_CONSTANTS.numRows !== this.ROW_MAP.length) {
@@ -60,25 +73,10 @@ define(["require", "exports", "./resource", "./app"], function (require, exports
                 _this.app = new app_1.App(_this.rc, _this.ctx);
                 _this.main();
             });
-            // FOR TESTING
         }
-        Engine.prototype.main = function () {
-            this.now = Date.now();
-            var dt = (this.now - this.lastTime) / 1000.0;
-            /* I contemplated replacing this.LastTime two calls to Date.now()
-             * But using two variables is about ten times faster than calling
-             * Date.now() twice. https://jsfiddle.net/1643q9qv/1/
-             */
-            this.lastTime = this.now;
-            this.update(dt);
-            this.render();
-            this.app.render();
-            window.requestAnimationFrame(this.main);
+        Engine.prototype.update = function (dt) {
+            this.app.update(dt);
         };
-        Engine.prototype.update = function (dt) { };
-        //   private updateEntites(dt: number) {
-        //       allEnemies.forEach(() => {});
-        //   }
         Engine.prototype.render = function () {
             var _this = this;
             /* By storing the map of what goes in each row in a constant, by pulling
@@ -86,7 +84,6 @@ define(["require", "exports", "./resource", "./app"], function (require, exports
              * store the information about the dimensions of the playing area, this
              * function's semantics are a lot clearer.
              */
-            console.log("Level: " + Date.now());
             this.ROW_MAP.forEach(function (rowContents, rowIndex) {
                 for (var colIndex = 0; colIndex < _this.CANVAS_CONSTANTS.numCols; ++colIndex) {
                     _this.ctx.drawImage(_this.rc.getImage(rowContents), colIndex * _this.CANVAS_CONSTANTS.colWidth, rowIndex * _this.CANVAS_CONSTANTS.rowHeight);

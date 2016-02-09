@@ -32,16 +32,16 @@ define(["require", "exports", "./resource", "./app"], function (require, exports
                 this.IMAGE_LOCATIONS.grass,
                 this.IMAGE_LOCATIONS.grass
             ];
-            this.canvas = document.createElement("canvas");
-            this.ctx = this.canvas.getContext("2d");
             /* Set up the canvas */
             this.CANVAS_CONSTANTS = canvasConstants;
             if (this.CANVAS_CONSTANTS.numRows !== this.ROW_MAP.length) {
                 throw "Mismatch between numRows and rows in ROW_MAP";
             }
+            this.canvas = document.createElement("canvas");
             this.canvas.width = canvasConstants.canvasWidth;
             this.canvas.height = canvasConstants.canvasHeight;
             document.body.appendChild(this.canvas);
+            this.ctx = this.canvas.getContext("2d");
             /* Create the argument for the images passed into the ResourceCache
              * constructor programatically, to permit refactoring of file locations at
              * a single point.
@@ -57,9 +57,10 @@ define(["require", "exports", "./resource", "./app"], function (require, exports
              */
             this.rc = new resource_1.ResourceCache(images, function () {
                 _this.lastTime = Date.now();
+                _this.app = new app_1.App(_this.rc, _this.ctx);
                 _this.main();
             });
-            this.app = new app_1.App(this.rc);
+            // FOR TESTING
         }
         Engine.prototype.main = function () {
             this.now = Date.now();
@@ -71,10 +72,10 @@ define(["require", "exports", "./resource", "./app"], function (require, exports
             this.lastTime = this.now;
             this.update(dt);
             this.render();
+            this.app.render();
             window.requestAnimationFrame(this.main);
         };
-        Engine.prototype.update = function (dt) {
-        };
+        Engine.prototype.update = function (dt) { };
         //   private updateEntites(dt: number) {
         //       allEnemies.forEach(() => {});
         //   }
@@ -85,6 +86,7 @@ define(["require", "exports", "./resource", "./app"], function (require, exports
              * store the information about the dimensions of the playing area, this
              * function's semantics are a lot clearer.
              */
+            console.log("Level: " + Date.now());
             this.ROW_MAP.forEach(function (rowContents, rowIndex) {
                 for (var colIndex = 0; colIndex < _this.CANVAS_CONSTANTS.numCols; ++colIndex) {
                     _this.ctx.drawImage(_this.rc.getImage(rowContents), colIndex * _this.CANVAS_CONSTANTS.colWidth, rowIndex * _this.CANVAS_CONSTANTS.rowHeight);

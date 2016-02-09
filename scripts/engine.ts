@@ -43,8 +43,8 @@ export class Engine {
   /* Variables */
   private rc: ResourceCache;
   private app: App;
-  private canvas = document.createElement("canvas");
-  private ctx = this.canvas.getContext("2d");
+  private canvas: HTMLCanvasElement;
+  private ctx: CanvasRenderingContext2D;
   private now: number;
   private lastTime: number;
   private dt: number;
@@ -55,12 +55,14 @@ export class Engine {
   constructor(canvasConstants: CanvasConstants) {
     /* Set up the canvas */
     this.CANVAS_CONSTANTS = canvasConstants;
-    if(this.CANVAS_CONSTANTS.numRows !== this.ROW_MAP.length) {
+    if (this.CANVAS_CONSTANTS.numRows !== this.ROW_MAP.length) {
       throw "Mismatch between numRows and rows in ROW_MAP";
     }
+    this.canvas = document.createElement("canvas");
     this.canvas.width = canvasConstants.canvasWidth;
     this.canvas.height = canvasConstants.canvasHeight;
     document.body.appendChild(this.canvas);
+    this.ctx = this.canvas.getContext("2d");
 
     /* Create the argument for the images passed into the ResourceCache
      * constructor programatically, to permit refactoring of file locations at
@@ -78,9 +80,10 @@ export class Engine {
      */
     this.rc = new ResourceCache(images, () => {
       this.lastTime = Date.now();
+      this.app = new App(this.rc, this.ctx);
       this.main();
     });
-    this.app = new App(this.rc);
+    // FOR TESTING
   }
 
   private main() {
@@ -94,16 +97,16 @@ export class Engine {
     this.lastTime = this.now;
     this.update(dt);
     this.render();
+    this.app.render();
 
     window.requestAnimationFrame(this.main);
   }
 
-  private update(dt: number) {
-  }
+  private update(dt: number) { }
 
-//   private updateEntites(dt: number) {
-//       allEnemies.forEach(() => {});
-//   }
+  //   private updateEntites(dt: number) {
+  //       allEnemies.forEach(() => {});
+  //   }
 
   private render() {
     /* By storing the map of what goes in each row in a constant, by pulling
@@ -111,6 +114,7 @@ export class Engine {
      * store the information about the dimensions of the playing area, this
      * function's semantics are a lot clearer.
      */
+    console.log("Level: " + Date.now());
     this.ROW_MAP.forEach((rowContents, rowIndex) => {
       for (let colIndex = 0; colIndex < this.CANVAS_CONSTANTS.numCols; ++colIndex) {
         this.ctx.drawImage(

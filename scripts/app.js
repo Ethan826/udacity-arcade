@@ -1,49 +1,91 @@
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
 define(["require", "exports", "./engine"], function (require, exports, engine_1) {
     "use strict";
     /* Avoid globals and problems with loading sequence by having the App class
      * manage the Engine class in a single point of entry.
      */
     var App = (function () {
-        function App(rc) {
+        function App(rc, ctx) {
             this.rc = rc;
-            /* Bad loose coupling here. Hmm. */
+            this.ctx = ctx;
             this.player = new Player(this.ctx, this.rc.getImage("images/char-boy.png"));
+            this.topEnemy = new EnemyBug(this.ctx, this.rc.getImage("images/enemy-bug.png"), 2);
+            this.middleEnemy = new EnemyBug(this.ctx, this.rc.getImage("images/enemy-bug.png"), 3);
+            this.bottomEnemy = new EnemyBug(this.ctx, this.rc.getImage("images/enemy-bug.png"), 4);
         }
         App.prototype.render = function () {
             this.player.render();
+            this.topEnemy.render();
+            this.middleEnemy.render();
+            this.bottomEnemy.render();
         };
         return App;
     }());
     exports.App = App;
-    var Enemy = (function () {
-        function Enemy(ctx, sprite) {
+    var Entity = (function () {
+        function Entity(ctx, sprite) {
             this.ctx = ctx;
             this.sprite = sprite;
         }
-        Enemy.prototype.update = function (dt) { };
-        Enemy.prototype.render = function () {
-            this.ctx.drawImage(this.sprite, this.location.x, this.location.y);
+        Entity.prototype.render = function () {
+            var spriteWidth = this.dimensions.endX - this.dimensions.startX;
+            var spriteHeight = this.dimensions.endY - this.dimensions.startY;
+            this.ctx.drawImage(this.sprite, // Image source
+            this.dimensions.startX, // Source X start
+            this.dimensions.startY, // Source Y start
+            spriteWidth, // Source width
+            spriteHeight, // Source height
+            this.location.x - Math.floor(spriteWidth / 2), // Destination X start
+            this.location.y - Math.floor(spriteHeight / 2), // Destination Y start
+            spriteWidth, // Destination width
+            spriteHeight // Destination height
+            );
         };
-        return Enemy;
+        return Entity;
     }());
-    var Player = (function () {
+    var EnemyBug = (function (_super) {
+        __extends(EnemyBug, _super);
+        function EnemyBug(ctx, sprite, rowNum) {
+            _super.call(this, ctx, sprite);
+            this.rowNum = rowNum;
+            this.dimensions = {
+                startX: 1,
+                startY: 75,
+                endX: 99,
+                endY: 144
+            };
+            this.location = {
+                x: 0,
+                y: engine_1.CANVAS_CONSTANTS.rowHeight * rowNum // Why not centered?
+            };
+        }
+        EnemyBug.prototype.update = function (dt) { };
+        return EnemyBug;
+    }(Entity));
+    var Player = (function (_super) {
+        __extends(Player, _super);
         function Player(ctx, sprite) {
-            this.ctx = ctx;
-            this.sprite = sprite;
             /* The initial position is in the middle, halfway up the bottom row. */
+            _super.call(this, ctx, sprite);
+            this.dimensions = {
+                startX: 16,
+                startY: 62,
+                endX: 84,
+                endY: 140
+            };
             this.location = {
                 x: engine_1.CANVAS_CONSTANTS.canvasWidth / 2,
-                y: Math.floor(engine_1.CANVAS_CONSTANTS.rowHeight * (engine_1.CANVAS_CONSTANTS.numRows + 0.5))
+                y: Math.floor(engine_1.CANVAS_CONSTANTS.rowHeight * engine_1.CANVAS_CONSTANTS.numRows)
             };
         }
         Player.prototype.update = function (dt) { };
         ;
-        Player.prototype.render = function () {
-            this.ctx.drawImage(this.sprite, this.location.x, this.location.y);
-        };
-        ;
         Player.prototype.handleInput = function () { };
         ;
         return Player;
-    }());
+    }(Entity));
 });

@@ -5,6 +5,13 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 define(["require", "exports", "./engine"], function (require, exports, engine_1) {
     "use strict";
+    var ArrowKeys;
+    (function (ArrowKeys) {
+        ArrowKeys[ArrowKeys["left"] = 0] = "left";
+        ArrowKeys[ArrowKeys["up"] = 1] = "up";
+        ArrowKeys[ArrowKeys["right"] = 2] = "right";
+        ArrowKeys[ArrowKeys["down"] = 3] = "down";
+    })(ArrowKeys || (ArrowKeys = {}));
     /* Avoid globals and problems with loading sequence by having the App class
      * manage the Engine class in a single point of entry.
      */
@@ -80,7 +87,17 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
     var Player = (function (_super) {
         __extends(Player, _super);
         function Player(ctx, sprite) {
+            var _this = this;
             _super.call(this, ctx, sprite);
+            this.KEY_CONSTANTS = {
+                37: ArrowKeys.left,
+                38: ArrowKeys.up,
+                39: ArrowKeys.right,
+                40: ArrowKeys.down
+            };
+            document.addEventListener('keyup', function (e) {
+                _this.handleInput(_this.KEY_CONSTANTS[e.keyCode]);
+            });
             this.dimensions = {
                 startX: 16,
                 startY: 62,
@@ -93,8 +110,10 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
                 y: Math.floor(engine_1.CANVAS_CONSTANTS.rowHeight * engine_1.CANVAS_CONSTANTS.numRows)
             };
         }
-        Player.prototype.update = function (dt) { };
-        Player.prototype.handleInput = function () { };
+        Player.prototype.update = function (dt) {
+        };
+        Player.prototype.handleInput = function (e) {
+        };
         return Player;
     }(Entity));
 });

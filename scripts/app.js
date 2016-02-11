@@ -12,6 +12,12 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
         ArrowKeys[ArrowKeys["right"] = 2] = "right";
         ArrowKeys[ArrowKeys["down"] = 3] = "down";
     })(ArrowKeys || (ArrowKeys = {}));
+    var KEY_CONSTANTS = {
+        37: ArrowKeys.left,
+        38: ArrowKeys.up,
+        39: ArrowKeys.right,
+        40: ArrowKeys.down
+    };
     /* Avoid globals and problems with loading sequence by having the App class
      * manage the Engine class in a single point of entry.
      */
@@ -84,20 +90,33 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
         };
         return EnemyBug;
     }(Entity));
+    var Keyboard = (function () {
+        function Keyboard() {
+            var _this = this;
+            this.downKeys = {
+                left: false,
+                up: false,
+                right: false,
+                down: false
+            };
+            window.addEventListener("keydown", function (e) {
+                _this.downKeys[ArrowKeys[KEY_CONSTANTS[e.keyCode]]] = true;
+            });
+            window.addEventListener("keyup", function (e) {
+                _this.downKeys[ArrowKeys[KEY_CONSTANTS[e.keyCode]]] = false;
+            });
+        }
+        Keyboard.prototype.isDown = function (key) {
+            return this.downKeys[ArrowKeys[key]];
+        };
+        return Keyboard;
+    }());
     var Player = (function (_super) {
         __extends(Player, _super);
         function Player(ctx, sprite) {
-            var _this = this;
             _super.call(this, ctx, sprite);
-            this.KEY_CONSTANTS = {
-                37: ArrowKeys.left,
-                38: ArrowKeys.up,
-                39: ArrowKeys.right,
-                40: ArrowKeys.down
-            };
-            document.addEventListener('keyup', function (e) {
-                _this.handleInput(_this.KEY_CONSTANTS[e.keyCode]);
-            });
+            this.keyboard = new Keyboard();
+            this.speed = 150;
             this.dimensions = {
                 startX: 16,
                 startY: 62,
@@ -111,8 +130,18 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
             };
         }
         Player.prototype.update = function (dt) {
-        };
-        Player.prototype.handleInput = function (e) {
+            if (this.keyboard.isDown(ArrowKeys.left)) {
+                this.location.x -= this.speed * dt;
+            }
+            if (this.keyboard.isDown(ArrowKeys.up)) {
+                this.location.y -= this.speed * dt;
+            }
+            if (this.keyboard.isDown(ArrowKeys.right)) {
+                this.location.x += this.speed * dt;
+            }
+            if (this.keyboard.isDown(ArrowKeys.down)) {
+                this.location.y += this.speed * dt;
+            }
         };
         return Player;
     }(Entity));

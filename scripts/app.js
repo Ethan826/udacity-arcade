@@ -5,6 +5,11 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 define(["require", "exports", "./engine"], function (require, exports, engine_1) {
     "use strict";
+    var EntityType;
+    (function (EntityType) {
+        EntityType[EntityType["player"] = 0] = "player";
+        EntityType[EntityType["enemy"] = 1] = "enemy";
+    })(EntityType || (EntityType = {}));
     var ArrowKeys;
     (function (ArrowKeys) {
         ArrowKeys[ArrowKeys["left"] = 0] = "left";
@@ -37,9 +42,63 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
             });
         };
         App.prototype.update = function (dt) {
+            var _this = this;
             this.entities.forEach(function (entity) {
                 entity.update(dt);
+                _this.checkCollisions();
             });
+        };
+        App.prototype.checkCollisions = function () {
+            var _this = this;
+            var coll = false;
+            var player = this.entities.filter(function (entity) {
+                return entity.entityType == EntityType.player;
+            })[0];
+            this.entities.forEach(function (entity) {
+                if (entity.entityType !== EntityType.player) {
+                    if (_this.collisionHelper(player, entity)) {
+                        console.log("Collisions!");
+                        coll = true;
+                    }
+                }
+            });
+            return coll;
+        };
+        App.prototype.checkWin = function () {
+            if (this.collisionHelper(this.entities.player, {
+                startX: 0,
+                endX: engine_1.CANVAS_CONSTANTS.canvasWidth,
+                startY: 0,
+                endY: 0 })) {
+            }
+        };
+        App.prototype.collisionHelper = function (e1, e2) {
+            var e1HalfWidth = (e1.dimensions.endX - e1.dimensions.startX) / 2;
+            var e1HalfHeight = (e1.dimensions.endY - e1.dimensions.startY) / 2;
+            var e2HalfWidth = (e2.dimensions.endX - e2.dimensions.startX) / 2;
+            var e2HalfHeight = (e2.dimensions.endY - e2.dimensions.startY) / 2;
+            var e1Coords = {
+                startX: e1.location.x - e1HalfWidth,
+                endX: e1.location.x + e1HalfWidth,
+                startY: e1.location.y - e1HalfHeight,
+                endY: e1.location.y + e1HalfHeight
+            };
+            var e2Coords = {
+                startX: e2.location.x - e2HalfWidth,
+                endX: e2.location.x + e2HalfWidth,
+                startY: e2.location.y - e2HalfHeight,
+                endY: e2.location.y + e2HalfHeight
+            };
+            var isEntirelyRight = e1Coords.startX > e2Coords.endX;
+            var isEntirelyLeft = e1Coords.endX < e2Coords.startX;
+            var isEntirelyAbove = e1Coords.endY < e2Coords.startY;
+            var isEntirelyBelow = e1Coords.startY > e2Coords.endY;
+            if (isEntirelyLeft || isEntirelyRight || isEntirelyAbove || isEntirelyBelow) {
+                return false;
+            }
+            else {
+                return true;
+            }
         };
         return App;
     }());
@@ -71,6 +130,7 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
             _super.call(this, ctx, sprite);
             this.rowNum = rowNum;
             this.speed = Math.random() * 400 + 100;
+            this.entityType = EntityType.enemy;
             this.dimensions = {
                 startX: 1,
                 startY: 75,
@@ -115,6 +175,7 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
         __extends(Player, _super);
         function Player(ctx, sprite) {
             _super.call(this, ctx, sprite);
+            this.entityType = EntityType.player;
             this.keyboard = new Keyboard();
             this.speed = 150;
             this.dimensions = {

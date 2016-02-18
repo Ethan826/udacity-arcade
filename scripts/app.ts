@@ -26,6 +26,12 @@ enum ArrowKeys {
   down
 }
 
+export enum GameConditions {
+  inProgress,
+  won,
+  lost
+}
+
 let KEY_CONSTANTS = {
   37: ArrowKeys.left,
   38: ArrowKeys.up,
@@ -33,11 +39,13 @@ let KEY_CONSTANTS = {
   40: ArrowKeys.down
 }
 
-/* Avoid globals and problems with loading sequence by having the App class
- * manage the Engine class in a single point of entry.
+/* Avoid globals and problems with loading sequence by having the Engine class
+ * manage the App class in a single point of entry.
  */
 export class App {
   private entities: Entity[];
+  private playerIndex: number;
+  private gameCondition = GameConditions.inProgress;
 
   constructor(private rc: ResourceCache, private ctx: CanvasRenderingContext2D) {
     let player = new Player(this.ctx, this.rc.getImage("images/char-boy.png"));
@@ -45,6 +53,11 @@ export class App {
     let middleEnemy = new EnemyBug(this.ctx, this.rc.getImage("images/enemy-bug.png"), 3);
     let bottomEnemy = new EnemyBug(this.ctx, this.rc.getImage("images/enemy-bug.png"), 4);
     this.entities = [player, topEnemy, middleEnemy, bottomEnemy];
+    this.playerIndex = 0;
+  }
+
+  getGameCondition() {
+    return this.gameCondition;
   }
 
   render() {
@@ -56,19 +69,17 @@ export class App {
   update(dt: number) {
     this.entities.forEach((entity) => {
       entity.update(dt);
-      this.checkCollisions();
+      if(this.checkCollisions()) { this.gameCondition = GameConditions.lost; }
+      if(this.checkWin()) { this.gameCondition = GameConditions.won; };
     });
   }
 
-  private checkCollisions() {
+  private checkCollisions() { // TODO: This needs to account for the sprite's non-rectangular shape
     let coll = false;
-    let player = this.entities.filter((entity: Entity) => {
-      return entity.entityType == EntityType.player;
-    })[0];
-    this.entities.forEach((entity) => {
+    let player = this.entities[this.playerIndex];
+    this.entities.forEach((entity) => { // Could also work based on indices
       if(entity.entityType !== EntityType.player) {
         if(this.collisionHelper(player, entity)) {
-          console.log("Collisions!");
           coll = true;
         }
       }
@@ -77,41 +88,30 @@ export class App {
   }
 
   private checkWin() {
-    if(this.collisionHelper(this.entities.player , { // TODO: Need to make player a member of entities by changing type
-      startX: 0, // TODO: Make collisionHelper take dimensions
-      endX: CANVAS_CONSTANTS.canvasWidth,
-      startY: 0,
-      endY: 0})) {
+    let player = this.entities[this.playerIndex];
+    let playerCoords = this.getCoords(player);
+    return playerCoords.startY <= CANVAS_CONSTANTS.rowHeight / 2 ? true : false;
+  }
 
-      }
+  private getCoords(entity: Entity): EntityCoords {
+    let entityHalfWidth = (entity.dimensions.endX - entity.dimensions.startX) / 2;
+    let entityHalfHeight = (entity.dimensions.endY - entity.dimensions.startY) / 2;
+    return {
+      startX: entity.location.x - entityHalfWidth,
+      endX: entity.location.x + entityHalfWidth,
+      startY: entity.location.y - entityHalfHeight,
+      endY: entity.location.y + entityHalfHeight
+    };
   }
 
   private collisionHelper(e1: Entity, e2: Entity): boolean {
-    let e1HalfWidth = (e1.dimensions.endX - e1.dimensions.startX) / 2;
-    let e1HalfHeight = (e1.dimensions.endY - e1.dimensions.startY) / 2;
-    let e2HalfWidth = (e2.dimensions.endX - e2.dimensions.startX) / 2;
-    let e2HalfHeight = (e2.dimensions.endY - e2.dimensions.startY) / 2;
-    let e1Coords: EntityCoords = {
-      startX: e1.location.x - e1HalfWidth,
-      endX: e1.location.x + e1HalfWidth,
-      startY: e1.location.y - e1HalfHeight,
-      endY: e1.location.y + e1HalfHeight
-    };
-    let e2Coords: EntityCoords = {
-      startX: e2.location.x - e2HalfWidth,
-      endX: e2.location.x + e2HalfWidth,
-      startY: e2.location.y - e2HalfHeight,
-      endY: e2.location.y + e2HalfHeight
-    }
+    let e1Coords = this.getCoords(e1);
+    let e2Coords = this.getCoords(e2);
     let isEntirelyRight = e1Coords.startX > e2Coords.endX;
     let isEntirelyLeft = e1Coords.endX < e2Coords.startX;
     let isEntirelyAbove = e1Coords.endY < e2Coords.startY;
     let isEntirelyBelow = e1Coords.startY > e2Coords.endY;
-    if(isEntirelyLeft || isEntirelyRight || isEntirelyAbove || isEntirelyBelow) {
-      return false;
-    } else {
-      return true;
-    }
+    return isEntirelyLeft || isEntirelyRight || isEntirelyAbove || isEntirelyBelow ? false : true;
   }
 }
 
@@ -187,7 +187,7 @@ class Keyboard {
   }
 
   constructor() {
-    window.addEventListener("keydown", (e: KeyboardEvent) => {       // This ain't working
+    window.addEventListener("keydown", (e: KeyboardEvent) => {
       this.downKeys[ArrowKeys[KEY_CONSTANTS[e.keyCode]]] = true;
     });
     window.addEventListener("keyup", (e: KeyboardEvent) => {
@@ -237,5 +237,4 @@ class Player extends Entity {
       this.location.y += this.speed * dt;
     }
   }
-
 }

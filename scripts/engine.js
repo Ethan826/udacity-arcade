@@ -33,16 +33,25 @@ define(["require", "exports", "./resource", "./app"], function (require, exports
                 this.IMAGE_LOCATIONS.grass
             ];
             this.main = function () {
-                _this.now = Date.now(); // Why the fuck isn't this working???
-                var dt = (_this.now - _this.lastTime) / 1000.0;
-                /* I contemplated replacing this.LastTime two calls to Date.now()
-                 * But using two variables is about ten times faster than calling
-                 * Date.now() twice. https://jsfiddle.net/1643q9qv/1/
-                 */
-                _this.lastTime = _this.now;
-                _this.update(dt);
-                _this.render();
-                _this.app.render();
+                var gameCondition = _this.app.getGameCondition();
+                if (gameCondition === app_1.GameConditions.inProgress) {
+                    _this.now = Date.now();
+                    var dt = (_this.now - _this.lastTime) / 1000.0;
+                    /* I contemplated replacing this.LastTime two calls to Date.now()
+                     * But using two variables is more than ten times faster than calling
+                     * Date.now() twice. https://jsfiddle.net/1643q9qv/1/
+                     */
+                    _this.lastTime = _this.now;
+                    _this.update(dt);
+                    _this.render();
+                    _this.app.render();
+                }
+                if (gameCondition === app_1.GameConditions.won) {
+                    _this.handleWin();
+                }
+                else if (gameCondition === app_1.GameConditions.lost) {
+                    _this.handleLoss();
+                }
                 window.requestAnimationFrame(_this.main);
             };
             /* Set up the canvas */
@@ -92,6 +101,18 @@ define(["require", "exports", "./resource", "./app"], function (require, exports
         };
         Engine.prototype.renderEntities = function () {
             this.app.render();
+        };
+        Engine.prototype.handleWin = function () {
+            this.ctx.beginPath();
+            this.ctx.rect(0, 0, this.CANVAS_CONSTANTS.canvasWidth, this.CANVAS_CONSTANTS.canvasHeight);
+            this.ctx.fillStyle = "green";
+            this.ctx.fill();
+        };
+        Engine.prototype.handleLoss = function () {
+            this.ctx.beginPath();
+            this.ctx.rect(0, 0, this.CANVAS_CONSTANTS.canvasWidth, this.CANVAS_CONSTANTS.canvasHeight);
+            this.ctx.fillStyle = "red";
+            this.ctx.fill();
         };
         return Engine;
     }());

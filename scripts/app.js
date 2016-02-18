@@ -17,25 +17,36 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
         ArrowKeys[ArrowKeys["right"] = 2] = "right";
         ArrowKeys[ArrowKeys["down"] = 3] = "down";
     })(ArrowKeys || (ArrowKeys = {}));
+    (function (GameConditions) {
+        GameConditions[GameConditions["inProgress"] = 0] = "inProgress";
+        GameConditions[GameConditions["won"] = 1] = "won";
+        GameConditions[GameConditions["lost"] = 2] = "lost";
+    })(exports.GameConditions || (exports.GameConditions = {}));
+    var GameConditions = exports.GameConditions;
     var KEY_CONSTANTS = {
         37: ArrowKeys.left,
         38: ArrowKeys.up,
         39: ArrowKeys.right,
         40: ArrowKeys.down
     };
-    /* Avoid globals and problems with loading sequence by having the App class
-     * manage the Engine class in a single point of entry.
+    /* Avoid globals and problems with loading sequence by having the Engine class
+     * manage the App class in a single point of entry.
      */
     var App = (function () {
         function App(rc, ctx) {
             this.rc = rc;
             this.ctx = ctx;
+            this.gameCondition = GameConditions.inProgress;
             var player = new Player(this.ctx, this.rc.getImage("images/char-boy.png"));
             var topEnemy = new EnemyBug(this.ctx, this.rc.getImage("images/enemy-bug.png"), 2);
             var middleEnemy = new EnemyBug(this.ctx, this.rc.getImage("images/enemy-bug.png"), 3);
             var bottomEnemy = new EnemyBug(this.ctx, this.rc.getImage("images/enemy-bug.png"), 4);
             this.entities = [player, topEnemy, middleEnemy, bottomEnemy];
+            this.playerIndex = 0;
         }
+        App.prototype.getGameCondition = function () {
+            return this.gameCondition;
+        };
         App.prototype.render = function () {
             this.entities.forEach(function (entity) {
                 entity.render();
@@ -45,19 +56,22 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
             var _this = this;
             this.entities.forEach(function (entity) {
                 entity.update(dt);
-                _this.checkCollisions();
+                if (_this.checkCollisions()) {
+                    _this.gameCondition = GameConditions.lost;
+                }
+                if (_this.checkWin()) {
+                    _this.gameCondition = GameConditions.won;
+                }
+                ;
             });
         };
         App.prototype.checkCollisions = function () {
             var _this = this;
             var coll = false;
-            var player = this.entities.filter(function (entity) {
-                return entity.entityType == EntityType.player;
-            })[0];
+            var player = this.entities[this.playerIndex];
             this.entities.forEach(function (entity) {
                 if (entity.entityType !== EntityType.player) {
                     if (_this.collisionHelper(player, entity)) {
-                        console.log("Collisions!");
                         coll = true;
                     }
                 }
@@ -65,40 +79,28 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
             return coll;
         };
         App.prototype.checkWin = function () {
-            if (this.collisionHelper(this.entities.player, {
-                startX: 0,
-                endX: engine_1.CANVAS_CONSTANTS.canvasWidth,
-                startY: 0,
-                endY: 0 })) {
-            }
+            var player = this.entities[this.playerIndex];
+            var playerCoords = this.getCoords(player);
+            return playerCoords.startY <= engine_1.CANVAS_CONSTANTS.rowHeight / 2 ? true : false;
+        };
+        App.prototype.getCoords = function (entity) {
+            var entityHalfWidth = (entity.dimensions.endX - entity.dimensions.startX) / 2;
+            var entityHalfHeight = (entity.dimensions.endY - entity.dimensions.startY) / 2;
+            return {
+                startX: entity.location.x - entityHalfWidth,
+                endX: entity.location.x + entityHalfWidth,
+                startY: entity.location.y - entityHalfHeight,
+                endY: entity.location.y + entityHalfHeight
+            };
         };
         App.prototype.collisionHelper = function (e1, e2) {
-            var e1HalfWidth = (e1.dimensions.endX - e1.dimensions.startX) / 2;
-            var e1HalfHeight = (e1.dimensions.endY - e1.dimensions.startY) / 2;
-            var e2HalfWidth = (e2.dimensions.endX - e2.dimensions.startX) / 2;
-            var e2HalfHeight = (e2.dimensions.endY - e2.dimensions.startY) / 2;
-            var e1Coords = {
-                startX: e1.location.x - e1HalfWidth,
-                endX: e1.location.x + e1HalfWidth,
-                startY: e1.location.y - e1HalfHeight,
-                endY: e1.location.y + e1HalfHeight
-            };
-            var e2Coords = {
-                startX: e2.location.x - e2HalfWidth,
-                endX: e2.location.x + e2HalfWidth,
-                startY: e2.location.y - e2HalfHeight,
-                endY: e2.location.y + e2HalfHeight
-            };
+            var e1Coords = this.getCoords(e1);
+            var e2Coords = this.getCoords(e2);
             var isEntirelyRight = e1Coords.startX > e2Coords.endX;
             var isEntirelyLeft = e1Coords.endX < e2Coords.startX;
             var isEntirelyAbove = e1Coords.endY < e2Coords.startY;
             var isEntirelyBelow = e1Coords.startY > e2Coords.endY;
-            if (isEntirelyLeft || isEntirelyRight || isEntirelyAbove || isEntirelyBelow) {
-                return false;
-            }
-            else {
-                return true;
-            }
+            return isEntirelyLeft || isEntirelyRight || isEntirelyAbove || isEntirelyBelow ? false : true;
         };
         return App;
     }());

@@ -2,12 +2,12 @@
 import {CANVAS_CONSTANTS} from "./engine";
 import {ResourceCache} from "./resource";
 
-interface Location {
+interface Coords {
   x: number;
   y: number;
 }
 
-interface EntityCoords {
+interface RectangleCoords {
   startX: number;
   startY: number;
   endX: number;
@@ -46,14 +46,41 @@ export class App {
   private entities: Entity[];
   private playerIndex: number;
   private gameCondition = GameConditions.inProgress;
+  private playerBounds: RectangleCoords;
 
   constructor(private rc: ResourceCache, private ctx: CanvasRenderingContext2D) {
-    let player = new Player(this.ctx, this.rc.getImage("images/char-boy.png"));
-    let topEnemy = new EnemyBug(this.ctx, this.rc.getImage("images/enemy-bug.png"), 2);
-    let middleEnemy = new EnemyBug(this.ctx, this.rc.getImage("images/enemy-bug.png"), 3);
-    let bottomEnemy = new EnemyBug(this.ctx, this.rc.getImage("images/enemy-bug.png"), 4);
-    this.entities = [player, topEnemy, middleEnemy, bottomEnemy];
+    let player = new Player(
+      this.ctx,
+      this.rc.getImage("images/char-boy.png"),
+      {
+        x: CANVAS_CONSTANTS.canvasWidth / 2,
+        y: Math.floor(CANVAS_CONSTANTS.rowHeight * CANVAS_CONSTANTS.numRows)
+      }
+      );
+    // let topEnemy = new EnemyBug(
+    //   this.ctx,
+    //   this.rc.getImage("images/enemy-bug.png"),
+    //   { x: 0, y: CANVAS_CONSTANTS.rowHeight * 2 }
+    //   );
+    // let middleEnemy = new EnemyBug(
+    //   this.ctx,
+    //   this.rc.getImage("images/enemy-bug.png"),
+    //   { x: 0, y: CANVAS_CONSTANTS.rowHeight * 3 }
+    //   );
+    let bottomEnemy = new EnemyBug(
+      this.ctx,
+      this.rc.getImage("images/enemy-bug.png"),
+      { x: 0, y: CANVAS_CONSTANTS.rowHeight * 4 });
+    this.entities = [player, /*topEnemy, middleEnemy,*/ bottomEnemy];
     this.playerIndex = 0;
+
+    let halfDimensions = this.getHalfDimensions(player);
+    this.playerBounds = {
+      startX: halfDimensions.x,
+      endX: CANVAS_CONSTANTS.canvasWidth - halfDimensions.x,
+      startY: halfDimensions.y,
+      endY: (CANVAS_CONSTANTS.numRows + 0.5) * CANVAS_CONSTANTS.rowHeight - halfDimensions.y
+    }
   }
 
   getGameCondition() {
@@ -69,17 +96,36 @@ export class App {
   update(dt: number) {
     this.entities.forEach((entity) => {
       entity.update(dt);
-      if(this.checkCollisions()) { this.gameCondition = GameConditions.lost; }
-      if(this.checkWin()) { this.gameCondition = GameConditions.won; };
+      if (entity.entityType === EntityType.player) {
+        this.keepPlayerInBounds(entity as Player);
+      }
+      if (this.checkCollisions()) { this.gameCondition = GameConditions.lost; }
+      if (this.checkWin()) { this.gameCondition = GameConditions.won; };
     });
+  }
+
+  private keepPlayerInBounds(entity: Player) {
+    let player = this.entities[this.playerIndex] as Player;
+    if (player.coords.x < this.playerBounds.startX) {
+      player.position({ x: this.playerBounds.startX, y: player.coords.y });
+    }
+    if (player.coords.x > this.playerBounds.endX) {
+      player.position({ x: this.playerBounds.endX, y: player.coords.y });
+    }
+    if (player.coords.y > this.playerBounds.endY) {
+      player.position({ x: player.coords.x, y: this.playerBounds.endY });
+    }
+    if (player.coords.y < this.playerBounds.startY) {
+      player.position({ x: player.coords.x, y: this.playerBounds.startY });
+    }
   }
 
   private checkCollisions() { // TODO: This needs to account for the sprite's non-rectangular shape
     let coll = false;
     let player = this.entities[this.playerIndex];
     this.entities.forEach((entity) => { // Could also work based on indices
-      if(entity.entityType !== EntityType.player) {
-        if(this.collisionHelper(player, entity)) {
+      if (entity.entityType !== EntityType.player) {
+        if (this.collisionHelper(player, entity)) {
           coll = true;
         }
       }
@@ -89,49 +135,72 @@ export class App {
 
   private checkWin() {
     let player = this.entities[this.playerIndex];
-    let playerCoords = this.getCoords(player);
-    return playerCoords.startY <= CANVAS_CONSTANTS.rowHeight / 2 ? true : false;
+    let playerRectangleCoords = this.getRectangleCoords(player);
+    return playerRectangleCoords.startY <= CANVAS_CONSTANTS.rowHeight / 2 ? true : false;
   }
 
-  private getCoords(entity: Entity): EntityCoords {
+  private getHalfDimensions(entity: Entity): Coords {
     let entityHalfWidth = (entity.dimensions.endX - entity.dimensions.startX) / 2;
     let entityHalfHeight = (entity.dimensions.endY - entity.dimensions.startY) / 2;
+    return { x: entityHalfWidth, y: entityHalfHeight }
+  }
+
+  private getRectangleCoords(entity: Entity): RectangleCoords {
+    let halfDimensions = this.getHalfDimensions(entity);
     return {
-      startX: entity.location.x - entityHalfWidth,
-      endX: entity.location.x + entityHalfWidth,
-      startY: entity.location.y - entityHalfHeight,
-      endY: entity.location.y + entityHalfHeight
+      startX: entity.coords.x - halfDimensions.x,
+      endX: entity.coords.x + halfDimensions.x,
+      startY: entity.coords.y - halfDimensions.y,
+      endY: entity.coords.y + halfDimensions.y
     };
   }
 
   private collisionHelper(e1: Entity, e2: Entity): boolean {
-    let e1Coords = this.getCoords(e1);
-    let e2Coords = this.getCoords(e2);
-    let isEntirelyRight = e1Coords.startX > e2Coords.endX;
-    let isEntirelyLeft = e1Coords.endX < e2Coords.startX;
-    let isEntirelyAbove = e1Coords.endY < e2Coords.startY;
-    let isEntirelyBelow = e1Coords.startY > e2Coords.endY;
-    return isEntirelyLeft || isEntirelyRight || isEntirelyAbove || isEntirelyBelow ? false : true;
+    // https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection
+    let dx = e1.coords.x - e2.coords.x;
+    let dy = e1.coords.y - e2.coords.y;
+    let distance = Math.sqrt(dx * dx + dy * dy);
+    return distance < e1.radius + e2.radius ? true : false;
   }
+
+  /* Rectangular collision helper
+  // private collisionHelper(e1: Entity, e2: Entity): boolean {
+  //   let e1RectangleCoords = this.getRectangleCoords(e1);
+  //   let e2RectangleCoords = this.getRectangleCoords(e2);
+  //   let isEntirelyRight = e1RectangleCoords.startX > e2RectangleCoords.endX;
+  //   let isEntirelyLeft = e1RectangleCoords.endX < e2RectangleCoords.startX;
+  //   let isEntirelyAbove = e1RectangleCoords.endY < e2RectangleCoords.startY;
+  //   let isEntirelyBelow = e1RectangleCoords.startY > e2RectangleCoords.endY;
+  //   return isEntirelyLeft || isEntirelyRight || isEntirelyAbove || isEntirelyBelow ? false : true;
+  // }*/
 }
 
 interface IEntity {
   update: (dt: number) => void;
   render: () => void;
   entityType: EntityType;
-  dimensions: EntityCoords;
+  dimensions: RectangleCoords;
+  radius: number;
 }
 
 abstract class Entity implements IEntity {
-  location: Location;
-  dimensions: EntityCoords;
+  dimensions: RectangleCoords;
   entityType: EntityType;
+  radius: number;
 
   constructor(
     protected ctx: CanvasRenderingContext2D,
-    protected sprite: HTMLImageElement) { }
+    protected sprite: HTMLImageElement,
+    public coords: Coords) {
+  }
 
   abstract update(dt: number): void;
+
+  protected getRadius(): number {
+    return Math.max(
+      this.dimensions.endX - this.dimensions.startX,
+      this.dimensions.endY - this.dimensions.startY) / 2;
+  }
 
   render() {
     let spriteWidth = this.dimensions.endX - this.dimensions.startX;
@@ -142,8 +211,8 @@ abstract class Entity implements IEntity {
       this.dimensions.startY, // Source Y start
       spriteWidth, // Source width
       spriteHeight, // Source height
-      this.location.x - Math.floor(spriteWidth / 2), // Destination X start
-      this.location.y - Math.floor(spriteHeight / 2), // Destination Y start
+      this.coords.x - spriteWidth / 2, // Destination X start
+      this.coords.y - spriteHeight / 2, // Destination Y start
       spriteWidth, // Destination width
       spriteHeight // Destination height
       );
@@ -153,27 +222,22 @@ abstract class Entity implements IEntity {
 class EnemyBug extends Entity {
   private speed = Math.random() * 400 + 100;
   entityType = EntityType.enemy;
+  dimensions = {
+    startX: 1,
+    startY: 75,
+    endX: 99,
+    endY: 144
+  }
 
-  constructor(ctx: CanvasRenderingContext2D, sprite: HTMLImageElement, private rowNum: number) {
-    super(ctx, sprite);
-
-    this.dimensions = {
-      startX: 1,
-      startY: 75,
-      endX: 99,
-      endY: 144
-    }
-
-    this.location = {
-      x: 0,
-      y: CANVAS_CONSTANTS.rowHeight * rowNum
-    }
+  constructor(ctx: CanvasRenderingContext2D, sprite: HTMLImageElement, coords: Coords) {
+    super(ctx, sprite, coords);
+    this.radius = this.getRadius();
   }
 
   update(dt: number) {
-    this.location.x += dt * this.speed;
-    if (this.location.x - this.sprite.width > CANVAS_CONSTANTS.canvasWidth) {
-      this.location.x = this.location.x - Math.floor(1.1 * CANVAS_CONSTANTS.canvasWidth) - this.sprite.width;
+    this.coords.x += dt * this.speed;
+    if (this.coords.x - this.sprite.width > CANVAS_CONSTANTS.canvasWidth) {
+      this.coords.x = this.coords.x - Math.floor(1.1 * CANVAS_CONSTANTS.canvasWidth) - this.sprite.width;
     }
   }
 }
@@ -205,36 +269,34 @@ class Player extends Entity {
 
   private keyboard = new Keyboard();
   private speed = 150;
+  dimensions = {
+    startX: 16,
+    startY: 62,
+    endX: 84,
+    endY: 140
+  }
 
-  constructor(ctx: CanvasRenderingContext2D, sprite: HTMLImageElement) {
-    super(ctx, sprite);
-
-    this.dimensions = {
-      startX: 16,
-      startY: 62,
-      endX: 84,
-      endY: 140
-    }
-
-    /* The initial position is in the middle, halfway up the bottom row. */
-    this.location = {
-      x: CANVAS_CONSTANTS.canvasWidth / 2,
-      y: Math.floor(CANVAS_CONSTANTS.rowHeight * CANVAS_CONSTANTS.numRows)
-    };
+  constructor(ctx: CanvasRenderingContext2D, sprite: HTMLImageElement, coords: Coords) {
+    super(ctx, sprite, coords);
+    this.radius = this.getRadius();
   }
 
   update(dt: number) {
     if (this.keyboard.isDown(ArrowKeys.left)) {
-      this.location.x -= this.speed * dt;
+      this.coords.x -= this.speed * dt;
     }
     if (this.keyboard.isDown(ArrowKeys.up)) {
-      this.location.y -= this.speed * dt;
+      this.coords.y -= this.speed * dt;
     }
     if (this.keyboard.isDown(ArrowKeys.right)) {
-      this.location.x += this.speed * dt;
+      this.coords.x += this.speed * dt;
     }
     if (this.keyboard.isDown(ArrowKeys.down)) {
-      this.location.y += this.speed * dt;
+      this.coords.y += this.speed * dt;
     }
+  }
+
+  position(coords: Coords) {
+    this.coords = coords;
   }
 }

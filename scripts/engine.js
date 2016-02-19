@@ -93,6 +93,7 @@ define(["require", "exports", "./resource", "./app"], function (require, exports
              * store the information about the dimensions of the playing area, this
              * function's semantics are a lot clearer.
              */
+            this.ctx.clearRect(0, 0, exports.CANVAS_CONSTANTS.canvasWidth, exports.CANVAS_CONSTANTS.canvasHeight);
             this.ROW_MAP.forEach(function (rowContents, rowIndex) {
                 for (var colIndex = 0; colIndex < _this.CANVAS_CONSTANTS.numCols; ++colIndex) {
                     _this.ctx.drawImage(_this.rc.getImage(rowContents), colIndex * _this.CANVAS_CONSTANTS.colWidth, rowIndex * _this.CANVAS_CONSTANTS.rowHeight);

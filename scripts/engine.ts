@@ -121,6 +121,7 @@ export class Engine {
      * store the information about the dimensions of the playing area, this
      * function's semantics are a lot clearer.
      */
+    this.ctx.clearRect(0, 0, CANVAS_CONSTANTS.canvasWidth, CANVAS_CONSTANTS.canvasHeight)
     this.ROW_MAP.forEach((rowContents, rowIndex) => {
       for (let colIndex = 0; colIndex < this.CANVAS_CONSTANTS.numCols; ++colIndex) {
         this.ctx.drawImage(

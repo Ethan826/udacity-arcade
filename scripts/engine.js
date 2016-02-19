@@ -108,12 +108,20 @@ define(["require", "exports", "./resource", "./app"], function (require, exports
             this.ctx.rect(0, 0, this.CANVAS_CONSTANTS.canvasWidth, this.CANVAS_CONSTANTS.canvasHeight);
             this.ctx.fillStyle = "green";
             this.ctx.fill();
+            this.ctx.font = "50px Helvetica";
+            this.ctx.fillStyle = "white";
+            this.ctx.textAlign = "center";
+            this.ctx.fillText("You Win!", exports.CANVAS_CONSTANTS.canvasWidth / 2, exports.CANVAS_CONSTANTS.canvasHeight / 2);
         };
         Engine.prototype.handleLoss = function () {
             this.ctx.beginPath();
             this.ctx.rect(0, 0, this.CANVAS_CONSTANTS.canvasWidth, this.CANVAS_CONSTANTS.canvasHeight);
             this.ctx.fillStyle = "red";
             this.ctx.fill();
+            this.ctx.font = "50px Helvetica";
+            this.ctx.fillStyle = "white";
+            this.ctx.textAlign = "center";
+            this.ctx.fillText("You Lose!", exports.CANVAS_CONSTANTS.canvasWidth / 2, exports.CANVAS_CONSTANTS.canvasHeight / 2);
         };
         return Engine;
     }());

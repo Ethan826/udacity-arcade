@@ -141,7 +141,7 @@ export class App {
         this.keepPlayerInBounds(entity as Player);
       }
       if (this.checkCollisions()) { this.gameCondition = GameConditions.lost; }
-      if (this.checkWin()) { this.gameCondition = GameConditions.won; };
+      if (this.checkWin()) { this.gameCondition = GameConditions.won; }
     });
   }
 

@@ -106,7 +106,6 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
                 if (_this.checkWin()) {
                     _this.gameCondition = GameConditions.won;
                 }
-                ;
             });
         };
         /* If the Player would be outside of the canvas bounds following the update()

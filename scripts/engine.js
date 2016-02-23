@@ -1,5 +1,13 @@
 define(["require", "exports", "./resource", "./app"], function (require, exports, resource_1, app_1) {
     "use strict";
+    /* Read app.js and app.ts first; it is more fully commented. */
+    (function (Difficulty) {
+        Difficulty[Difficulty["easy"] = 0] = "easy";
+        Difficulty[Difficulty["medium"] = 1] = "medium";
+        Difficulty[Difficulty["hard"] = 2] = "hard";
+    })(exports.Difficulty || (exports.Difficulty = {}));
+    var Difficulty = exports.Difficulty;
+    /* Avoid magic constants, permit changing the canvas at a single point. */
     exports.CANVAS_CONSTANTS = {
         numCols: 5,
         numRows: 6,
@@ -12,11 +20,10 @@ define(["require", "exports", "./resource", "./app"], function (require, exports
         /* The class constructor handles the preloading of images and the work of the
          * init() function as it was previously implemented.
          */
-        function Engine(canvasConstants) {
+        function Engine(canvasConstants, difficulty) {
             var _this = this;
-            /* The constants in the original were scattered throughout the file; here I
-             * have combined them for readability and to allow changes at a single point.
-             */
+            this.difficulty = difficulty;
+            /* Constants */
             this.IMAGE_LOCATIONS = {
                 water: "images/water-block.png",
                 stone: "images/stone-block.png",
@@ -24,6 +31,7 @@ define(["require", "exports", "./resource", "./app"], function (require, exports
                 enemy: "images/enemy-bug.png",
                 char: "images/char-boy.png"
             };
+            /* This array is a map of the rows. */
             this.ROW_MAP = [
                 this.IMAGE_LOCATIONS.water,
                 this.IMAGE_LOCATIONS.stone,
@@ -79,7 +87,7 @@ define(["require", "exports", "./resource", "./app"], function (require, exports
              */
             this.rc = new resource_1.ResourceCache(images, function () {
                 _this.lastTime = Date.now();
-                _this.app = new app_1.App(_this.rc, _this.ctx);
+                _this.app = new app_1.App(_this.rc, _this.ctx, _this.difficulty);
                 _this.main();
             });
         }
@@ -112,6 +120,11 @@ define(["require", "exports", "./resource", "./app"], function (require, exports
             this.ctx.fillStyle = "white";
             this.ctx.textAlign = "center";
             this.ctx.fillText("You Win!", exports.CANVAS_CONSTANTS.canvasWidth / 2, exports.CANVAS_CONSTANTS.canvasHeight / 2);
+            /* There might be a better way to do this, but since everything gets
+             * reloaded anyway, this simply displays the You Win! message for three
+             * seconds, then reloads the page. The page should be cached.
+             */
+            window.setTimeout(function () { location.reload(); }, 3000);
         };
         Engine.prototype.handleLoss = function () {
             this.ctx.beginPath();
@@ -122,9 +135,28 @@ define(["require", "exports", "./resource", "./app"], function (require, exports
             this.ctx.fillStyle = "white";
             this.ctx.textAlign = "center";
             this.ctx.fillText("You Lose!", exports.CANVAS_CONSTANTS.canvasWidth / 2, exports.CANVAS_CONSTANTS.canvasHeight / 2);
+            window.setTimeout(function () { location.reload(); }, 3000);
         };
         return Engine;
     }());
     exports.Engine = Engine;
-    var engine = new Engine(exports.CANVAS_CONSTANTS);
+    /* This actually runs the game. */
+    (function () {
+        var before = "<h1>Difficulty</h1><br>\n<button id=\"easy\">Easy</button>&nbsp;\n<button id=\"medium\">Medium</button>&nbsp;\n<button id=\"hard\">Hard</button>";
+        $("#input").html(before);
+        $("body").find("*").off();
+        $("#input").html(before);
+        $("#easy").click(function () {
+            $("#input").hide();
+            var engine = new Engine(exports.CANVAS_CONSTANTS, Difficulty.easy);
+        });
+        $("#medium").click(function () {
+            $("#input").hide();
+            var engine = new Engine(exports.CANVAS_CONSTANTS, Difficulty.medium);
+        });
+        $("#hard").click(function () {
+            $("#input").hide();
+            var engine = new Engine(exports.CANVAS_CONSTANTS, Difficulty.hard);
+        });
+    }());
 });

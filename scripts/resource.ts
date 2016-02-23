@@ -1,22 +1,20 @@
-/**
-* The GameImage object maintains its own state over whether it is ready in a
-* dedicated boolean variable, rather than the kludge of changing types from
-* boolean to HTMLImageElement. This class is not exported, but its instances
-* are closed over by the ResourceCache class.
-*/
+/* The GameImage object maintains its own state over whether it is ready in a
+ * dedicated boolean variable, rather than the kludge of changing types from
+ * boolean to HTMLImageElement. This class is not exported, but its instances
+ * are closed over by the ResourceCache class.
+ */
 interface GameImage {
   url: string;
   ready: boolean;
   img: HTMLImageElement;
 }
 
-/**
-* The ImageSupervisor class is the imtermediary to the GameImage instances. It
-* handles initiating each object and tracking when all are ready by registering
-* callbacks with each instance. When all callbacks are called, the class calls
-* its own callback function, which permits the program to continue. This class's
-* instance is not exported, but is closed over by the ResourceCache class.
-*/
+/* The ImageSupervisor class is the intermediary to the GameImage instances. It
+ * handles initiating each object and tracking when all are ready by registering
+ * callbacks with each instance. When all callbacks are called, the class calls
+ * its own callback function, which permits the program to continue. This class's
+ * instance is not exported, but is closed over by the ResourceCache class.
+ */
 class ImageSupervisor {
   private images: GameImage[] = [];
   private requestsComplete = false;
@@ -67,13 +65,8 @@ class ImageSupervisor {
   }
 }
 
-/**
-* The ImageSupervisor class is the imtermediary to the GameImage instances. It
-* handles initiating each object and tracking when all are ready by registering
-* callbacks with each instance. When all callbacks are called, the class calls
-* its own callback function, which permits the program to continue. This class's
-* instance is not exported, but is closed over by the ResourceCache class.
-*/
+/* Similar to the previous implementation.
+ */
 export class ResourceCache {
   private allLoaded = false;
   private imageSupervisor = new ImageSupervisor(() => {

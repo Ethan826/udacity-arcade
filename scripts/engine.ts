@@ -1,3 +1,4 @@
+/// <reference path="../typings/jquery/jquery.d.ts"/>
 import {ResourceCache} from "./resource";
 import {App, GameConditions} from "./app"
 
@@ -10,6 +11,14 @@ interface CanvasConstants {
   canvasHeight: number;
 }
 
+/* Read app.js and app.ts first; it is more fully commented. */
+export enum Difficulty {
+  easy,
+  medium,
+  hard
+}
+
+/* Avoid magic constants, permit changing the canvas at a single point. */
 export let CANVAS_CONSTANTS: CanvasConstants = {
   numCols: 5,
   numRows: 6,
@@ -20,9 +29,7 @@ export let CANVAS_CONSTANTS: CanvasConstants = {
 }
 
 export class Engine {
-  /* The constants in the original were scattered throughout the file; here I
-   * have combined them for readability and to allow changes at a single point.
-   */
+  /* Constants */
   private IMAGE_LOCATIONS = {
     water: "images/water-block.png",
     stone: "images/stone-block.png",
@@ -30,6 +37,8 @@ export class Engine {
     enemy: "images/enemy-bug.png",
     char: "images/char-boy.png"
   };
+
+  /* This array is a map of the rows. */
   private ROW_MAP = [
     this.IMAGE_LOCATIONS.water,
     this.IMAGE_LOCATIONS.stone,
@@ -52,7 +61,7 @@ export class Engine {
   /* The class constructor handles the preloading of images and the work of the
    * init() function as it was previously implemented.
    */
-  constructor(canvasConstants: CanvasConstants) {
+  constructor(canvasConstants: CanvasConstants, private difficulty: Difficulty) {
     /* Set up the canvas */
     this.CANVAS_CONSTANTS = canvasConstants;
     if (this.CANVAS_CONSTANTS.numRows !== this.ROW_MAP.length) {
@@ -80,7 +89,7 @@ export class Engine {
      */
     this.rc = new ResourceCache(images, () => {
       this.lastTime = Date.now();
-      this.app = new App(this.rc, this.ctx);
+      this.app = new App(this.rc, this.ctx, this.difficulty);
       this.main();
     });
   }
@@ -146,7 +155,14 @@ export class Engine {
     this.ctx.fillStyle = "white";
     this.ctx.textAlign = "center";
     this.ctx.fillText("You Win!", CANVAS_CONSTANTS.canvasWidth / 2, CANVAS_CONSTANTS.canvasHeight / 2);
+
+    /* There might be a better way to do this, but since everything gets
+     * reloaded anyway, this simply displays the You Win! message for three
+     * seconds, then reloads the page. The page should be cached.
+     */
+    window.setTimeout(() => { location.reload(); }, 3000);
   }
+
   private handleLoss() {
     this.ctx.beginPath();
     this.ctx.rect(0, 0, this.CANVAS_CONSTANTS.canvasWidth, this.CANVAS_CONSTANTS.canvasHeight);
@@ -156,7 +172,29 @@ export class Engine {
     this.ctx.fillStyle = "white";
     this.ctx.textAlign = "center";
     this.ctx.fillText("You Lose!", CANVAS_CONSTANTS.canvasWidth / 2, CANVAS_CONSTANTS.canvasHeight / 2);
+    window.setTimeout(() => { location.reload(); }, 3000);
   }
 }
 
-let engine = new Engine(CANVAS_CONSTANTS);
+/* This actually runs the game. */
+(function() {
+  let before = `<h1>Difficulty</h1><br>
+<button id="easy">Easy</button>&nbsp;
+<button id="medium">Medium</button>&nbsp;
+<button id="hard">Hard</button>`;
+  $("#input").html(before);
+  $("body").find("*").off();
+  $("#input").html(before);
+  $("#easy").click(() => {
+    $("#input").hide();
+    let engine = new Engine(CANVAS_CONSTANTS, Difficulty.easy);
+  });
+  $("#medium").click(() => {
+    $("#input").hide();
+    let engine = new Engine(CANVAS_CONSTANTS, Difficulty.medium);
+  });
+  $("#hard").click(() => {
+    $("#input").hide();
+    let engine = new Engine(CANVAS_CONSTANTS, Difficulty.hard);
+  });
+} ());

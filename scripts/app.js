@@ -5,11 +5,18 @@ var __extends = (this && this.__extends) || function (d, b) {
 };
 define(["require", "exports", "./engine"], function (require, exports, engine_1) {
     "use strict";
+    /* The enum implementation in TypeScript compiles to this code in JavaScript.
+     * The EntityType enum lets an Entity (which is an abstract class implemented
+     * by Player and Enemy) to keep track of its type without using reflection.
+     * This could be expanded to other entities like tokens, coins, other players,
+     * other enemies, etc.
+     */
     var EntityType;
     (function (EntityType) {
         EntityType[EntityType["player"] = 0] = "player";
         EntityType[EntityType["enemy"] = 1] = "enemy";
     })(EntityType || (EntityType = {}));
+    /* The ArrowKeys enum assists in keyboard inputs for Player. */
     var ArrowKeys;
     (function (ArrowKeys) {
         ArrowKeys[ArrowKeys["left"] = 0] = "left";
@@ -17,12 +24,14 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
         ArrowKeys[ArrowKeys["right"] = 2] = "right";
         ArrowKeys[ArrowKeys["down"] = 3] = "down";
     })(ArrowKeys || (ArrowKeys = {}));
+    /* The GameConditions enum is used by the main loop. */
     (function (GameConditions) {
         GameConditions[GameConditions["inProgress"] = 0] = "inProgress";
         GameConditions[GameConditions["won"] = 1] = "won";
         GameConditions[GameConditions["lost"] = 2] = "lost";
     })(exports.GameConditions || (exports.GameConditions = {}));
     var GameConditions = exports.GameConditions;
+    /* This avoids magic constants in the code. */
     var KEY_CONSTANTS = {
         37: ArrowKeys.left,
         38: ArrowKeys.up,
@@ -33,27 +42,35 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
      * manage the App class in a single point of entry.
      */
     var App = (function () {
-        function App(rc, ctx) {
+        /* App manages the ResourceCache, the entities, the difficulty level, and
+         * holds a reference to the context for rendering.
+         */
+        function App(rc, ctx, difficulty) {
             this.rc = rc;
             this.ctx = ctx;
+            this.difficulty = difficulty;
             this.gameCondition = GameConditions.inProgress;
+            /* Entities takes the context, the image, an initial position, and the
+             * difficulty level.
+             */
             var player = new Player(this.ctx, this.rc.getImage("images/char-boy.png"), {
                 x: engine_1.CANVAS_CONSTANTS.canvasWidth / 2,
                 y: Math.floor(engine_1.CANVAS_CONSTANTS.rowHeight * engine_1.CANVAS_CONSTANTS.numRows)
-            });
-            // let topEnemy = new EnemyBug(
-            //   this.ctx,
-            //   this.rc.getImage("images/enemy-bug.png"),
-            //   { x: 0, y: CANVAS_CONSTANTS.rowHeight * 2 }
-            //   );
-            // let middleEnemy = new EnemyBug(
-            //   this.ctx,
-            //   this.rc.getImage("images/enemy-bug.png"),
-            //   { x: 0, y: CANVAS_CONSTANTS.rowHeight * 3 }
-            //   );
-            var bottomEnemy = new EnemyBug(this.ctx, this.rc.getImage("images/enemy-bug.png"), { x: 0, y: engine_1.CANVAS_CONSTANTS.rowHeight * 4 });
-            this.entities = [player, bottomEnemy];
+            }, this.difficulty);
+            var topEnemy = new EnemyBug(this.ctx, this.rc.getImage("images/enemy-bug.png"), { x: 0, y: engine_1.CANVAS_CONSTANTS.rowHeight * 2 }, this.difficulty);
+            var middleEnemy = new EnemyBug(this.ctx, this.rc.getImage("images/enemy-bug.png"), { x: 0, y: engine_1.CANVAS_CONSTANTS.rowHeight * 3 }, this.difficulty);
+            var bottomEnemy = new EnemyBug(this.ctx, this.rc.getImage("images/enemy-bug.png"), { x: 0, y: engine_1.CANVAS_CONSTANTS.rowHeight * 4 }, this.difficulty);
+            /* After creating the entities, put them in the array of entities. */
+            this.entities = [player, topEnemy, middleEnemy, bottomEnemy];
+            /* playerIndex tracks the array index for the Player. */
             this.playerIndex = 0;
+            /* The entities' sprites are bigger than the visible portion of the images.
+             * Each entity holds its own coordinates for the visible portion of the
+             * images. The playerBounds define the portion of the canvas that the
+             * player can occupy. The middle of the Player can't actually go to the
+             * edge of the canvas, so this logic keeps track of how close to the edge
+             * the player can go. The keepPlayerInBounds() method uses this.
+             */
             var halfDimensions = this.getHalfDimensions(player);
             this.playerBounds = {
                 startX: halfDimensions.x,
@@ -62,18 +79,24 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
                 endY: (engine_1.CANVAS_CONSTANTS.numRows + 0.5) * engine_1.CANVAS_CONSTANTS.rowHeight - halfDimensions.y
             };
         }
+        /* Getter method. */
         App.prototype.getGameCondition = function () {
             return this.gameCondition;
         };
+        /* Loop through the entities and call each entity's render method. */
         App.prototype.render = function () {
             this.entities.forEach(function (entity) {
                 entity.render();
             });
         };
+        /* Loop through the entities and call each entity's update method. */
         App.prototype.update = function (dt) {
             var _this = this;
             this.entities.forEach(function (entity) {
                 entity.update(dt);
+                /* Do some checks: if the loop is on Player, make sure the player is in
+                 * bounds. Check for collisions. Then see if the game is won or lost.
+                 */
                 if (entity.entityType === EntityType.player) {
                     _this.keepPlayerInBounds(entity);
                 }
@@ -86,6 +109,9 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
                 ;
             });
         };
+        /* If the Player would be outside of the canvas bounds following the update()
+         * method, put the player on the edge.
+         */
         App.prototype.keepPlayerInBounds = function (entity) {
             var player = this.entities[this.playerIndex];
             if (player.coords.x < this.playerBounds.startX) {
@@ -101,6 +127,9 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
                 player.position({ x: player.coords.x, y: this.playerBounds.startY });
             }
         };
+        /* Loops through the entities, skipping over the Player. Checks to see if the
+         * Player has collided with any of the entities.
+         */
         App.prototype.checkCollisions = function () {
             var _this = this;
             var coll = false;
@@ -114,16 +143,22 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
             });
             return coll;
         };
+        /* Determine if the player has gone to the top of the screen */
         App.prototype.checkWin = function () {
             var player = this.entities[this.playerIndex];
             var playerRectangleCoords = this.getRectangleCoords(player);
             return playerRectangleCoords.startY <= engine_1.CANVAS_CONSTANTS.rowHeight / 2 ? true : false;
         };
+        /* The entity's half dimensions are used for the radius in the collision
+         * logic, the keepPlayerInBounds() logic, and the edges of the entity given
+         * its point coordinates.
+         */
         App.prototype.getHalfDimensions = function (entity) {
             var entityHalfWidth = (entity.dimensions.endX - entity.dimensions.startX) / 2;
             var entityHalfHeight = (entity.dimensions.endY - entity.dimensions.startY) / 2;
             return { x: entityHalfWidth, y: entityHalfHeight };
         };
+        /* Given an entity's point coordinates, return its boundaries. */
         App.prototype.getRectangleCoords = function (entity) {
             var halfDimensions = this.getHalfDimensions(entity);
             return {
@@ -133,6 +168,7 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
                 endY: entity.coords.y + halfDimensions.y
             };
         };
+        /* Given two entities, return true if they have collided. */
         App.prototype.collisionHelper = function (e1, e2) {
             // https://developer.mozilla.org/en-US/docs/Games/Techniques/2D_collision_detection
             var dx = e1.coords.x - e2.coords.x;
@@ -143,14 +179,20 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
         return App;
     }());
     exports.App = App;
+    /* TypeScript permits abstract classes. The Entity class is implemented by
+     * the Enemy and Player classes.
+     */
     var Entity = (function () {
         function Entity(ctx, sprite, coords) {
             this.ctx = ctx;
             this.sprite = sprite;
             this.coords = coords;
         }
+        /* getRadius() uses 0.8 as a hack to avoid non-round sprites from colliding
+         * too easily.
+         */
         Entity.prototype.getRadius = function () {
-            return Math.max(this.dimensions.endX - this.dimensions.startX, this.dimensions.endY - this.dimensions.startY) / 2;
+            return 0.8 * Math.max(this.dimensions.endX - this.dimensions.startX, this.dimensions.endY - this.dimensions.startY) / 2;
         };
         Entity.prototype.render = function () {
             var spriteWidth = this.dimensions.endX - this.dimensions.startX;
@@ -168,11 +210,12 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
         };
         return Entity;
     }());
+    /* This is how TypeScript handles implementing the abstract class Entity.
+     */
     var EnemyBug = (function (_super) {
         __extends(EnemyBug, _super);
-        function EnemyBug(ctx, sprite, coords) {
+        function EnemyBug(ctx, sprite, coords, difficulty) {
             _super.call(this, ctx, sprite, coords);
-            this.speed = Math.random() * 400 + 100;
             this.entityType = EntityType.enemy;
             this.dimensions = {
                 startX: 1,
@@ -181,16 +224,31 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
                 endY: 144
             };
             this.radius = this.getRadius();
+            /* The higher the difficulty setting, the faster the enemy. */
+            if (difficulty == engine_1.Difficulty.easy) {
+                this.speed = Math.random() * 200 + 100;
+            }
+            else if (difficulty == engine_1.Difficulty.medium) {
+                this.speed = Math.random() * 300 + 100;
+            }
+            else {
+                this.speed = Math.random() * 400 + 100;
+            }
         }
         EnemyBug.prototype.update = function (dt) {
             this.coords.x += dt * this.speed;
+            /* The 1.1 multiplier is to let the bug get fully off screen before cycling
+             * back to the start.
+             */
             if (this.coords.x - this.sprite.width > engine_1.CANVAS_CONSTANTS.canvasWidth) {
                 this.coords.x = this.coords.x - Math.floor(1.1 * engine_1.CANVAS_CONSTANTS.canvasWidth) - this.sprite.width;
             }
         };
         return EnemyBug;
     }(Entity));
+    /* Keyboard handles key inputs for Player. */
     var Keyboard = (function () {
+        // http://nokarma.org/2011/02/27/javascript-game-development-keyboard-input/
         function Keyboard() {
             var _this = this;
             this.downKeys = {
@@ -213,7 +271,7 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
     }());
     var Player = (function (_super) {
         __extends(Player, _super);
-        function Player(ctx, sprite, coords) {
+        function Player(ctx, sprite, coords, difficulty) {
             _super.call(this, ctx, sprite, coords);
             this.entityType = EntityType.player;
             this.keyboard = new Keyboard();
@@ -225,6 +283,16 @@ define(["require", "exports", "./engine"], function (require, exports, engine_1)
                 endY: 140
             };
             this.radius = this.getRadius();
+            /* Player gets slower with increasing difficulty. */
+            if (difficulty == engine_1.Difficulty.easy) {
+                this.speed = 200;
+            }
+            else if (difficulty == engine_1.Difficulty.medium) {
+                this.speed = 150;
+            }
+            else {
+                this.speed = 100;
+            }
         }
         Player.prototype.update = function (dt) {
             if (this.keyboard.isDown(ArrowKeys.left)) {

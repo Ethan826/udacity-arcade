@@ -10,6 +10,9 @@
     },
     "jasmine/jasmine.d.ts": {
       "commit": "c4826e748ddfc4c3b96dfe9636d6bd1b062baf8b"
+    },
+    "jquery/jquery.d.ts": {
+      "commit": "95433230a9913054c57c715e6b91a9ae738d0b97"
     }
   }
 }

@@ -1,12 +1,11 @@
 define(["require", "exports"], function (require, exports) {
     "use strict";
-    /**
-    * The ImageSupervisor class is the imtermediary to the GameImage instances. It
-    * handles initiating each object and tracking when all are ready by registering
-    * callbacks with each instance. When all callbacks are called, the class calls
-    * its own callback function, which permits the program to continue. This class's
-    * instance is not exported, but is closed over by the ResourceCache class.
-    */
+    /* The ImageSupervisor class is the intermediary to the GameImage instances. It
+     * handles initiating each object and tracking when all are ready by registering
+     * callbacks with each instance. When all callbacks are called, the class calls
+     * its own callback function, which permits the program to continue. This class's
+     * instance is not exported, but is closed over by the ResourceCache class.
+     */
     var ImageSupervisor = (function () {
         function ImageSupervisor(callback) {
             this.callback = callback;
@@ -18,14 +17,14 @@ define(["require", "exports"], function (require, exports) {
             if (!this.getImage(url)) {
                 var img = new Image();
                 img.src = url;
-                var tempImage = { url: url, ready: false, img: img };
-                tempImage.img.onload = function () {
-                    tempImage.ready = true;
+                var tempImage_1 = { url: url, ready: false, img: img };
+                tempImage_1.img.onload = function () {
+                    tempImage_1.ready = true;
                     if (_this.checkAllLoaded()) {
                         _this.callback();
                     }
                 };
-                this.images.push(tempImage);
+                this.images.push(tempImage_1);
             }
         };
         ImageSupervisor.prototype.getImage = function (url) {
@@ -56,13 +55,8 @@ define(["require", "exports"], function (require, exports) {
         };
         return ImageSupervisor;
     }());
-    /**
-    * The ImageSupervisor class is the imtermediary to the GameImage instances. It
-    * handles initiating each object and tracking when all are ready by registering
-    * callbacks with each instance. When all callbacks are called, the class calls
-    * its own callback function, which permits the program to continue. This class's
-    * instance is not exported, but is closed over by the ResourceCache class.
-    */
+    /* Similar to the previous implementation.
+     */
     var ResourceCache = (function () {
         function ResourceCache(urls, callback) {
             var _this = this;

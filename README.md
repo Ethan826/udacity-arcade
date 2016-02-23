@@ -15,3 +15,7 @@ I have substantially overhauled the `engine.js` file for two reasons. First, I d
 ## Difficulty levels
 
 I have implemented selectable difficulty levels to attempt to satisfy the _Exceeds Specifications_ standard on the rubric. This is implemented by speeding up the bugs and slowing down the player at harder difficulty levels.
+
+## Testing
+
+I have stubbed out the beginning of a test suite using Jasmine. Open the `unit-tests.html` file to see the initial tests. Exporting tests using require.js proved somewhat difficulty, but I think I figure it out.

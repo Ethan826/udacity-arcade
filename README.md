@@ -2,7 +2,7 @@
 
 ## Using
 
-Clone the repository. Open `index.html`. Have fun!
+Clone the repository. Open `index.html`. Choose the difficulty level. Avoid the bugs. Get to the water.
 
 ## TypeScript
 
